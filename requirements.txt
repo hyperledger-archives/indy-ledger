@@ -6,3 +6,4 @@ python-gflags
 bitstring
 pycrypto>=2.5
 nose
+pytest

@@ -6,6 +6,7 @@ from ct.client.db import log_db
 from ct.client.db import database
 from ct.proto import client_pb2
 
+
 class SQLiteLogDB(log_db.LogDB):
     def __init__(self, connection_manager):
         """Initialize the database and tables.
