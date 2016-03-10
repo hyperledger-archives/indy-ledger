@@ -1,21 +1,38 @@
 from pymongo import MongoClient
 
+from immutable_store.store import ImmutableStore, StoreType, \
+    Properties
 
-# TODO Create an interface for persistence adapters like this one.
-class MongoDBLedger():
+
+class MongoDBLedger(ImmutableStore):
     """
     Persistence Adapter for Merkle Trees that uses MongoDB.
     """
+
     def __init__(self, dbName: str, collectionName: str):
-        # TODO Create db if not exists
         self._client = MongoClient()
         self._db = self._client[dbName]
-        self.ledger = self._db[collectionName]
-        # TODO The db name or table name may need to be changed
+        self._ledger = self._db[collectionName]
 
-    def persist(self, record):
-        # TODO Some validation maybe required here.
-        return self.ledger.insert_one(record)
+    def storeType(self):
+        return StoreType.nosql
 
-    # TODO Add some query methods here.
+    def append(self, record):
+        self.validate(record)
+        return self._ledger.insert_one(record)
 
+    def validate(self, record: dict) -> bool:
+        """
+        Checks whether all the properties in the record are valid.
+
+        :param record:
+        :return:
+        """
+        assert all(x in dir(Properties)
+                   for x in record.keys())
+
+    def getTxnBySeqNo(self, seqNo: int):
+        return self.findTxnByProperties({Properties.seq_no.name: seqNo})
+
+    def findTxnByProperties(self, propertyMap: dict):
+        return self._ledger.find(propertyMap)

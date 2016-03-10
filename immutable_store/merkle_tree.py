@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import List, Tuple
 
 
@@ -9,24 +10,38 @@ class MerkleTree:
     # TODO Check if @property annotation works with interfaces in Python.
     # A lot of these could be properties.
     def insert(self, *events):
-        raise NotImplementedError
+        """
 
+        :param events:
+        :return:
+        """
+
+    @abstractmethod
     def getMTH(self):
-        raise NotImplementedError
+        """
+        """
 
+    @abstractmethod
     def getLastEventTimestamp(self):
-        raise NotImplementedError
+        """
+        """
 
+    @abstractmethod
     def getAuditPath(self, event):
-        raise NotImplementedError
+        """
+        """
 
+    @abstractmethod
     def getProof(self, sth1, sth2):
+        """
+        """
         # TODO Make the default value of the second STH equal the current STH
-        raise NotImplementedError
 
     # TODO This should probably go into the Monitor if we decide to have one.
+    @abstractmethod
     def validate(self, event):
-        raise NotImplementedError
+        """
+        """
 
 
 class PersistentMerkleTree(MerkleTree):
@@ -39,15 +54,32 @@ class PersistentMerkleTree(MerkleTree):
     # TODO Can the key simply be a hash of the data in the leaf? This would mean
     # that there won't be any duplicate data in the tree. Is that acceptable?
 
-    @property
+    @abstractmethod
     def persistenceStore(self):
-        raise NotImplementedError
+        """
 
+        :return:
+        """
+
+    @abstractmethod
     def store(self, entries: List[Tuple]):
-        raise NotImplementedError
+        """
 
+        :param entries:
+        :return:
+        """
+
+    @abstractmethod
     def retrieve(self, keys: List[str]):
-        raise NotImplementedError
+        """
 
+        :param keys:
+        :return:
+        """
+
+    @abstractmethod
     def load(self):
-        raise NotImplementedError
+        """
+
+        :return:
+        """

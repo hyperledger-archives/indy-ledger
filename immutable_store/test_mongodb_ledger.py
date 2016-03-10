@@ -1,15 +1,16 @@
 from immutable_store.mongodb_ledger import MongoDBLedger
 
 # TODO These tests will write to local mongoDB, must use a DBUnit instead.
+# TODO afterAll must drop the databases
 
-ledger = MongoDBLedger("testLedger", "ledger")
+store = MongoDBLedger("testLedger", "ledger")
 
 
 def testLedgerPersistsOneRecord():
-    ret = ledger.persist(
-        {"key": "no validation yet. Can insert anything"})
-    print(ret)
-    assert (ret is not None)
+    key = 'client_id'
+    record = {key: 1}
+    store.append(record)
+    assert record[key] == store.findTxnByProperties(record)[0][key]
 
 
 def testLedgerPersistsMultipleRecords():
@@ -27,3 +28,11 @@ def testLedgerCanPersistANonFullSubTree():
 def testLedgerCanLoadUpAValidMerkleTree():
     pass
 
+
+# Advanced test
+def testConstructSparseMerkleFromCompactMerkleTreeData():
+    pass
+
+
+def testCleanup():
+    store._ledger.drop()
