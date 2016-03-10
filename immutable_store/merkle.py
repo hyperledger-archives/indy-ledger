@@ -2,10 +2,8 @@
 
 Benchmark sample code:
 
->>> import os
->>> import timeit
->>> from ct.crypto import merkle
-# generate a few blobs approx the size of a typical cert, takes a few seconds
+>>> from immutable_store import merkle import os
+>>> import timeit# generate a few blobs approx the size of a typical cert, takes a few seconds
 >>> leaves = [os.urandom(2048) for i in xrange(65536)]
 >>> hasher = merkle.TreeHasher()
 >>> def timeav(code, n=20):
@@ -27,7 +25,8 @@ import logging
 from base64 import b64encode
 from binascii import hexlify
 
-from ct.crypto import error
+from immutable_store import error
+from immutable_store.merkle_tree import MerkleTree
 
 
 def count_bits_set(i):

@@ -34,5 +34,6 @@ def testConstructSparseMerkleFromCompactMerkleTreeData():
     pass
 
 
-def testCleanup():
+# TODO An in-memory store can be used instead of using this tear down logic.
+def testTearDown():
     store._ledger.drop()

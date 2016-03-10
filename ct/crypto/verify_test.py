@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 
-import unittest
-
 import base64
-import gflags
 import os
 import sys
+import unittest
+
+import gflags
+import mock
 
 from ct.crypto import cert
-from ct.crypto import error
 from ct.crypto import pem
 from ct.crypto import verify
 from ct.proto import client_pb2
 from ct.serialization import tls_message
-import mock
+from immutable_store import error
 
 FLAGS = gflags.FLAGS
 gflags.DEFINE_string("testdata_dir", "../test/testdata",

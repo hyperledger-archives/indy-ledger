@@ -2,7 +2,6 @@
 
 import unittest
 
-from ct.crypto import error
 from ct.crypto.asn1 import oid
 from ct.crypto.asn1 import type_test_base
 

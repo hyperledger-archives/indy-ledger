@@ -4,9 +4,9 @@ See http://luca.ntop.org/Teaching/Appunti/asn1.html for a good introduction
 to ASN.1.
 """
 
-from ct.crypto import error
 from ct.crypto.asn1 import tag
 from ct.crypto.asn1 import types
+from immutable_store import error
 
 
 @types.Universal(6, tag.PRIMITIVE)

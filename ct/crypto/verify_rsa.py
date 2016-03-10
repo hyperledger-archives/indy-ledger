@@ -1,10 +1,11 @@
-from ct.crypto import error
-from ct.crypto import pem
-from ct.proto import client_pb2
-
 import Crypto.Hash.SHA256
 import Crypto.PublicKey.RSA
 import Crypto.Signature.PKCS1_v1_5
+
+from ct.crypto import pem
+from ct.proto import client_pb2
+from immutable_store import error
+
 
 class RsaVerifier(object):
     """Verifies RSA signatures."""

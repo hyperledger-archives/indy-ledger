@@ -1,8 +1,8 @@
 """ASN.1 specification for X509 name types."""
 
-from ct.crypto import error
 from ct.crypto.asn1 import oid
 from ct.crypto.asn1 import types
+from immutable_store import error
 
 
 class AttributeType(oid.ObjectIdentifier):

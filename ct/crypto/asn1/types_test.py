@@ -2,10 +2,10 @@
 
 import unittest
 
-from ct.crypto import error
 from ct.crypto.asn1 import tag
-from ct.crypto.asn1 import types
 from ct.crypto.asn1 import type_test_base
+from ct.crypto.asn1 import types
+from immutable_store import error
 
 
 class TagDecoratorTest(unittest.TestCase):

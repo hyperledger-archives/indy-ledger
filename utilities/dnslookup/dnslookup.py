@@ -9,17 +9,19 @@
 # You will need to install DNSPython (http://www.dnspython.org/)
 
 import base64
-import dns.resolver
 import hashlib
 import json
 import logging
 import os
 import sys
+
+import dns.resolver
 import urllib2
 
 basepath = os.path.dirname(sys.argv[0])
 sys.path.append(os.path.join(basepath, '../../../python'))
-from ct.crypto import merkle, verify
+from ct.crypto import verify
+from immutable_store import merkle
 from ct.proto import client_pb2
 
 class CTDNSLookup:

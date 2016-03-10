@@ -1,7 +1,6 @@
 import unittest
 
-
-from ct.crypto import error
+from immutable_store import error
 
 
 class TypeTestBase(unittest.TestCase):
@@ -83,9 +82,9 @@ class TypeTestBase(unittest.TestCase):
     def test_decode_fails(self):
         for bad_enc in self.bad_encodings:
             self.assertRaises(error.ASN1Error, self.asn1_type.decode,
-                bad_enc.decode("hex"))
+                              bad_enc.decode("hex"))
             self.assertRaises(error.ASN1Error, self.asn1_type.decode,
-                bad_enc.decode("hex"), strict=False)
+                              bad_enc.decode("hex"), strict=False)
 
     def test_strict_decode_fails(self):
         for value, bad_enc in self.bad_strict_encodings:

@@ -1,9 +1,10 @@
 """Read and write PEM files and strings."""
 
 import base64
+
 import StringIO
 
-from ct.crypto import error
+from immutable_store import error
 
 
 class PemError(error.EncodingError):

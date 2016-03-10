@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 """This utility fetches the proof for a single certificate by its hash."""
 
-import struct
 import sys
+
+import gflags
 
 from ct.client import log_client
 from ct.crypto import cert
-from ct.crypto import merkle
 from ct.proto import client_pb2
 from ct.serialization import tls_message
-import gflags
+from immutable_store import merkle
 
 FLAGS = gflags.FLAGS
 

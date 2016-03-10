@@ -2,9 +2,9 @@
 import abc
 import time
 
-from ct.crypto import error
 from ct.crypto.asn1 import tag
 from ct.crypto.asn1 import types
+from immutable_store import error
 
 
 class BaseTime(types.ASN1String):

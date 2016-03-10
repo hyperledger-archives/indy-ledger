@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+import time
 import unittest
 
-import time
 from ct.crypto import cert
-from ct.crypto import error
 from ct.crypto.asn1 import oid
 from ct.crypto.asn1 import x509_extension as x509_ext
 from ct.crypto.asn1 import x509_name
 from ct.test import test_config
+from immutable_store import error
 
 class CertificateTest(unittest.TestCase):
     _PEM_FILE = "google_cert.pem"
@@ -487,7 +487,7 @@ class CertificateTest(unittest.TestCase):
     def test_negative_serial_number(self):
         # Fails because of the leading ff-octet.
         self.assertRaises(error.ASN1Error, self.cert_from_pem_file,
-            self._PEM_NEGATIVE_SERIAL)
+                          self._PEM_NEGATIVE_SERIAL)
         c = self.cert_from_pem_file(self._PEM_NEGATIVE_SERIAL,
                                     strict=False)
         self.assertEqual(-218943125988803304701934765446014018,

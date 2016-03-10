@@ -4,6 +4,8 @@ from immutable_store.store import ImmutableStore, StoreType, \
     Properties
 
 
+# TODO This class currently connects to a local instance of MongoDB. Must be
+# configurable to connect to remote dbs.
 class MongoDBLedger(ImmutableStore):
     """
     Persistence Adapter for Merkle Trees that uses MongoDB.
@@ -28,11 +30,14 @@ class MongoDBLedger(ImmutableStore):
         :param record:
         :return:
         """
-        assert all(x in dir(Properties)
+        assert all(x in [x for x in dir(Properties) if not x.startswith('__')]
                    for x in record.keys())
 
     def getTxnBySeqNo(self, seqNo: int):
-        return self.findTxnByProperties({Properties.seq_no.name: seqNo})
+        return self._ledger.find_one({Properties.seq_no.name: seqNo})
 
     def findTxnByProperties(self, propertyMap: dict):
         return self._ledger.find(propertyMap)
+
+    def getAllTxns(self):
+        return self._ledger.find().sort(Properties.seq_no.name, 1)

@@ -3,9 +3,7 @@
 import io
 import struct
 
-from ct.crypto import error
 from ct.crypto import pem
-from ct.crypto import merkle
 from ct.crypto import verify_ecdsa
 from ct.crypto import verify_rsa
 from ct.crypto.asn1 import oid
@@ -15,6 +13,7 @@ from ct.crypto.asn1 import x509_name
 from ct.proto import client_pb2
 from ct.proto import ct_pb2
 from ct.serialization import tls_message
+from immutable_store import merkle, error
 
 SUPPORTED_SIGNATURE_ALGORITHMS = (
     ct_pb2.DigitallySigned.ECDSA,
@@ -39,7 +38,7 @@ def decode_signature(signature):
     sig_prefix = sig_stream.read(2)
     if len(sig_prefix) != 2:
         raise error.EncodingError("Invalid algorithm prefix %s" %
-                                      sig_prefix.encode("hex"))
+                                  sig_prefix.encode("hex"))
     hash_algo, sig_algo = struct.unpack(">BB", sig_prefix)
     if (hash_algo != ct_pb2.DigitallySigned.SHA256 or
         sig_algo not in SUPPORTED_SIGNATURE_ALGORITHMS):

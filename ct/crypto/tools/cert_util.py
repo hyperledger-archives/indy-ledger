@@ -29,11 +29,13 @@ Known commands:
 """
 
 import sys
+
+import gflags
+
 from ct.crypto import cert
-from ct.crypto import error
 from ct.crypto import pem
 from ct.crypto.asn1 import print_util
-import gflags
+from immutable_store import error
 
 FLAGS = gflags.FLAGS
 gflags.DEFINE_bool("subject", False, "Print option: prints certificate subject")

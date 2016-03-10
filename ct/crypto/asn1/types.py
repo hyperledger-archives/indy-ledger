@@ -22,10 +22,9 @@ import collections
 import functools
 import re
 
-from ct.crypto import error
 from ct.crypto.asn1 import print_util
 from ct.crypto.asn1 import tag
-
+from immutable_store import error
 
 _ZERO = "\x00"
 _MINUS_ONE = "\xff"
@@ -1379,7 +1378,7 @@ class Repeated(Constructed, collections.MutableSequence):
     def insert(self, index, value):
         if type(value) is not self.component:
             value = self.component(value)
-        self._value.insert(index, value)
+        self._value.append(index, value)
         self._modified = True
 
     @property

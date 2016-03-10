@@ -3,19 +3,18 @@
 
 import base64
 import hashlib
-import sys
-
 import json
 import logging
+import sys
+
 import gflags
 
 from ct.client import log_client
 from ct.crypto import cert
-from ct.crypto import error
-from ct.crypto import pem
 from ct.crypto import verify
 from ct.proto import client_pb2
 from ct.serialization import tls_message
+from immutable_store import error
 
 FLAGS = gflags.FLAGS
 

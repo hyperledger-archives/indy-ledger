@@ -1,7 +1,8 @@
-import gflags
 import logging
 import threading
 import time
+
+import gflags
 
 FLAGS = gflags.FLAGS
 
@@ -11,7 +12,7 @@ gflags.DEFINE_integer("probe_frequency_secs", 10*60,
 from ct.client import log_client
 from ct.client import monitor
 from ct.client import state
-from ct.crypto import merkle
+from immutable_store import merkle
 from ct.crypto import verify
 from twisted.internet import reactor
 from twisted.web import client as twisted_client

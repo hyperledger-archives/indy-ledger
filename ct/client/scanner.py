@@ -4,14 +4,14 @@ import collections
 import functools
 import multiprocessing
 import traceback
+
 import Queue
 
 from ct.client import entry_decoder
 from ct.client import log_client
 from ct.crypto import cert
-from ct.crypto import error
 from ct.proto import client_pb2
-
+from immutable_store import error
 
 # Messages types:
 # Special queue messages to stop the subprocesses.

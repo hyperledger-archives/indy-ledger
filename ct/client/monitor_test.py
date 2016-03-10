@@ -1,24 +1,21 @@
 #!/usr/bin/env trial
 import copy
 import difflib
-import gflags
 import logging
-import mock
-import os
 import sys
 
-from ct.client import log_client
-from ct.client.db import sqlite_connection as sqlitecon
-from ct.client.db import sqlite_log_db
-from ct.client import state
-from ct.client import monitor
-from ct.crypto import error
-from ct.crypto import merkle
-from ct.proto import client_pb2
+import gflags
+import mock
 from twisted.internet import defer
 from twisted.trial import unittest
-from twisted.web import iweb
-from zope.interface import implements
+
+from ct.client import log_client
+from ct.client import monitor
+from ct.client import state
+from ct.client.db import sqlite_connection as sqlitecon
+from ct.client.db import sqlite_log_db
+from ct.proto import client_pb2
+from immutable_store import merkle, error
 
 FLAGS = gflags.FLAGS
 

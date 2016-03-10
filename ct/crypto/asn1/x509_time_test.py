@@ -2,8 +2,8 @@
 
 import unittest
 
-from ct.crypto import error
 from ct.crypto.asn1 import x509_time
+from immutable_store import error
 
 
 class TimeTest(unittest.TestCase):

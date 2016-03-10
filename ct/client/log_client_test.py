@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 
-import unittest
-
 import base64
 import json
+import sys
+import unittest
+
+import gflags
 import mock
 import requests
-import sys
 
 from ct.client import log_client
 from ct.client import log_client_test_util as test_util
-from ct.crypto import merkle
 from ct.proto import client_pb2
-import gflags
+from immutable_store import merkle
 
 FLAGS = gflags.FLAGS
 

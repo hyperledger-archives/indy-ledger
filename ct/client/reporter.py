@@ -1,19 +1,18 @@
 import abc
-import gflags
 import hashlib
 import logging
 import multiprocessing
-import sys
 import threading
-import traceback
+
+import gflags
+from Queue import Queue
 
 from ct.cert_analysis import all_checks
 from ct.cert_analysis import asn1
 from ct.client.db import cert_desc
 from ct.crypto import cert
-from ct.crypto import error
 from ct.proto import certificate_pb2
-from Queue import Queue
+from immutable_store import error
 
 FLAGS = gflags.FLAGS
 

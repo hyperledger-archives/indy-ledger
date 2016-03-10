@@ -127,6 +127,11 @@ class UnsupportedVersionError(Error):
     pass
 
 
+class GeneralMissingError(Error):
+    """Some required attribute is missing"""
+    pass
+
+
 def returns_true_or_raises(f):
     """A safety net.
 

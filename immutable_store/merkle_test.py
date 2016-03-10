@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
-import unittest
-from binascii import hexlify, unhexlify
-
-from collections import namedtuple
 import hashlib
 import math
+import unittest
+from binascii import hexlify, unhexlify
+from collections import namedtuple
 
-from ct.crypto import error
-from ct.crypto import merkle
+from immutable_store import merkle, error
 
 
 class TreeHasherTest(unittest.TestCase):

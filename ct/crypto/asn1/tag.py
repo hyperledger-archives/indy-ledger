@@ -1,7 +1,6 @@
 """ASN.1 tagging."""
 
-from ct.crypto import error
-
+from immutable_store import error
 
 UNIVERSAL = 0x00
 APPLICATION = 0x40

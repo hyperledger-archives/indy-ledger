@@ -1,16 +1,16 @@
-import gflags
 import logging
 
-from ct.client import entry_decoder
-from ct.client import state
-from ct.client import aggregated_reporter
-from ct.crypto import error
-from ct.crypto import merkle
-from ct.client import db_reporter
-from ct.client import text_reporter
-from ct.proto import client_pb2
+import gflags
 from twisted.internet import defer
 from twisted.internet import threads
+
+from ct.client import aggregated_reporter
+from ct.client import db_reporter
+from ct.client import entry_decoder
+from ct.client import state
+from ct.client import text_reporter
+from ct.proto import client_pb2
+from immutable_store import merkle, error
 
 FLAGS = gflags.FLAGS
 

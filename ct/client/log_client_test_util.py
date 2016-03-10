@@ -1,8 +1,8 @@
 import copy
 
 from ct.client import log_client
-from ct.crypto import merkle
 from ct.proto import client_pb2
+from immutable_store import merkle
 
 DEFAULT_STH = client_pb2.SthResponse()
 DEFAULT_STH.timestamp = 1234

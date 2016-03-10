@@ -9,7 +9,7 @@ class MerkleTree:
 
     # TODO Check if @property annotation works with interfaces in Python.
     # A lot of these could be properties.
-    def insert(self, *events):
+    def append(self, *events):
         """
 
         :param events:
