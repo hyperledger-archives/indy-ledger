@@ -26,7 +26,6 @@ class Ledger:
         self._addTxnToTree(data)
         self._addTxnToStore(data)
 
-    # TODO This currently works for a tree of size 1 only.
     def _addTxnToTree(self, data):
         leaf_data_hash = data[Properties.leaf_data_hash.name]
         leaf_data = data[Properties.leaf_data.name]

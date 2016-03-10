@@ -121,7 +121,7 @@ class TreeHasher(object):
         return accum
 
 
-class CompactMerkleTree(object):
+class CompactMerkleTree(MerkleTree):
     """Compact representation of a Merkle Tree that permits only extension.
 
     Attributes:
