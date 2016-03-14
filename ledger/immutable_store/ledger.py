@@ -68,8 +68,11 @@ class Ledger:
 
     async def getTxn(self, clientId: str, reqId: int):
         serialNo = self.store.getProcessedReq(clientId, reqId)
-        jsonReply = self.store.get(serialNo)[F.leaf_data.name]['reply']
-        return self._createReplyFromJson(jsonReply)
+        if serialNo:
+            jsonReply = self.store.get(serialNo)[F.leaf_data.name]['reply']
+            return self._createReplyFromJson(jsonReply)
+        else:
+            return serialNo
 
     def _createReplyRecord(self, reply):
         return {
@@ -81,3 +84,9 @@ class Ledger:
         return Reply(jsonReply["viewNo"],
                      jsonReply["reqId"],
                      jsonReply["result"])
+
+    def start(self, loop):
+        pass
+
+    def stop(self):
+        pass

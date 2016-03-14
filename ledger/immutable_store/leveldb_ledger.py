@@ -46,9 +46,3 @@ class LevelDBLedger(ImmutableStore):
         for key, _ in self._reply.iterator(reverse=True):
             return int(key.decode('utf-8'))
         return 0
-
-    def start(self, loop):
-        pass
-
-    def stop(self):
-        self.drop()
