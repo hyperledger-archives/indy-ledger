@@ -11,13 +11,17 @@ class LevelDBLedger(ImmutableStore):
         self._processedReq = self._db.prefixed_db(b'processedReq')
 
     def insertProcessedReq(self, clientId, reqId, serial_no):
-        key = bytes((clientId + "-" + reqId), 'utf-8')
-        value = bytes(serial_no, 'utf-8')
+        key = bytes((clientId + "-" + str(reqId)), 'utf-8')
+        value = bytes(str(serial_no), 'utf-8')
         self._processedReq.put(key, value)
 
     def getProcessedReq(self, clientId, reqId):
-        key = bytes((clientId + "-" + reqId), 'utf-8')
-        return self._processedReq.get(key).decode('utf-8')
+        key = bytes((clientId + "-" + str(reqId)), 'utf-8')
+        serialNo = self._processedReq.get(key)
+        if serialNo:
+            return serialNo.decode('utf-8')
+        else:
+            return serialNo
 
     def append(self, serialno, record):
         key = bytes(str(serialno).encode('utf-8'))
@@ -26,8 +30,10 @@ class LevelDBLedger(ImmutableStore):
     def get(self, serialno):
         key = str(serialno).encode('utf-8')
         value = self._reply.get(key)
-        record = eval(value.decode('utf-8'))
-        return record
+        if value:
+            return eval(value.decode('utf-8'))
+        else:
+            return value
 
     def getAll(self):
         return self._reply.iterator()
@@ -40,3 +46,9 @@ class LevelDBLedger(ImmutableStore):
         for key, _ in self._reply.iterator(reverse=True):
             return int(key.decode('utf-8'))
         return 0
+
+    def start(self, loop):
+        pass
+
+    def stop(self):
+        self.drop()

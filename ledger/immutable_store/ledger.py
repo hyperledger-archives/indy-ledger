@@ -1,11 +1,12 @@
 import time
+from collections import namedtuple
 
 from ledger.immutable_store.error import GeneralMissingError
 from ledger.immutable_store.merkle import TreeHasher
 from ledger.immutable_store.merkle_tree import MerkleTree
 from ledger.immutable_store.store import ImmutableStore, F
 
-
+Reply = namedtuple('Reply', ['viewNo', 'reqId', 'result'])
 class Ledger:
     def __init__(self, tree: MerkleTree, store: ImmutableStore):
         """
@@ -49,7 +50,7 @@ class Ledger:
     async def insertTxn(self, clientId: str, reply, txnId: str):
         txn = {
             "clientId": clientId,
-            "reply": reply,
+            "reply": self._createReplyRecord(reply),
             "txnId": txnId
         }
         data = {
@@ -67,5 +68,16 @@ class Ledger:
 
     async def getTxn(self, clientId: str, reqId: int):
         serialNo = self.store.getProcessedReq(clientId, reqId)
-        return self.store.get(serialNo)
+        jsonReply = self.store.get(serialNo)[F.leaf_data.name]['reply']
+        return self._createReplyFromJson(jsonReply)
 
+    def _createReplyRecord(self, reply):
+        return {
+            "viewNo": reply.viewNo,
+            "reqId": reply.reqId,
+            "result": reply.result}
+
+    def _createReplyFromJson(self, jsonReply):
+        return Reply(jsonReply["viewNo"],
+                     jsonReply["reqId"],
+                     jsonReply["result"])
