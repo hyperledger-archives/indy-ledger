@@ -5,9 +5,9 @@ import os
 import sys
 
 import gflags
-
-from ct.client import scanner
 from ct.proto import client_pb2
+
+from ref.ct.client import scanner
 
 FLAGS = gflags.FLAGS
 

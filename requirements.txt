@@ -1,9 +1,0 @@
-dnspython
-ecdsa
-mock>=1.0
-protobuf
-python-gflags
-bitstring
-pycrypto>=2.5
-nose
-pytest

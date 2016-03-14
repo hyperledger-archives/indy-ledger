@@ -1,7 +1,6 @@
 from pymongo import MongoClient
 
-from immutable_store.store import ImmutableStore, StoreType, \
-    Properties
+from immutable_store.store import ImmutableStore, F
 
 
 # TODO This class currently connects to a local instance of MongoDB. Must be
@@ -16,9 +15,6 @@ class MongoDBLedger(ImmutableStore):
         self._db = self._client[dbName]
         self._ledger = self._db[collectionName]
 
-    def storeType(self):
-        return StoreType.nosql
-
     def append(self, record):
         self.validate(record)
         return self._ledger.insert_one(record)
@@ -30,14 +26,14 @@ class MongoDBLedger(ImmutableStore):
         :param record:
         :return:
         """
-        assert all(x in [x for x in dir(Properties) if not x.startswith('__')]
+        assert all(x in [x for x in dir(F) if not x.startswith('__')]
                    for x in record.keys())
 
-    def getTxnBySeqNo(self, seqNo: int):
-        return self._ledger.find_one({Properties.seq_no.name: seqNo})
+    def get(self, seqNo: int):
+        return self._ledger.find_one({F.seq_no.name: seqNo})
 
-    def findTxnByProperties(self, propertyMap: dict):
+    def find(self, propertyMap: dict):
         return self._ledger.find(propertyMap)
 
-    def getAllTxns(self):
-        return self._ledger.find().sort(Properties.seq_no.name, 1)
+    def getAll(self):
+        return self._ledger.find().sort(F.seq_no.name, 1)

@@ -1,7 +1,7 @@
 from immutable_store.error import GeneralMissingError
 from immutable_store.merkle import TreeHasher
 from immutable_store.merkle_tree import MerkleTree
-from immutable_store.store import ImmutableStore, Properties
+from immutable_store.store import ImmutableStore, F
 
 
 class Ledger:
@@ -19,16 +19,16 @@ class Ledger:
         self.recoverTree()
 
     def recoverTree(self):
-        for entry in self.store.getAllTxns():
-            self._addTxnToTree(entry)
+        for entry in self.store.getAll():
+            self._addToTree(entry)
 
-    def addTxn(self, data):
-        self._addTxnToTree(data)
-        self._addTxnToStore(data)
+    def add(self, data):
+        self._addToTree(data)
+        self._addToStore(data)
 
-    def _addTxnToTree(self, data):
-        leaf_data_hash = data[Properties.leaf_data_hash.name]
-        leaf_data = data[Properties.leaf_data.name]
+    def _addToTree(self, data):
+        leaf_data_hash = data[F.leaf_data_hash.name]
+        leaf_data = data[F.leaf_data.name]
         if leaf_data_hash:
             self.tree.append(leaf_data_hash)
         elif leaf_data:
@@ -38,7 +38,7 @@ class Ledger:
         else:
             raise GeneralMissingError("Transaction not found.")
 
-    def _addTxnToStore(self, data):
+    def _addToStore(self, data):
         self.store.append(data)
 
 

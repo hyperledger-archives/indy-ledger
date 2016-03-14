@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
 
-setup(name='Google Certificate Transparency',
-      version='0.9',
-      description='Certificate Transparency python client and monitor library',
-      url='https://github.com/google/certificate-transparency',
-      packages=['ct', 'ct.crypto', 'ct.crypto.asn1', 'ct.client'],
-     )
+setup(name='Ledger',
+      version='0.0.1',
+      description='Immutable Ledger python library',
+      url='https://github.com/evernym/ledger',
+      install_requires=['pymongo', ],
+      setup_requires=['pytest-runner', ],
+      tests_require=['pytest', ],
+      packages=['ledger', ],
+
+      )

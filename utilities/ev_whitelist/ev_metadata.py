@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from ct.crypto.asn1 import oid
+from ref.ct.crypto import oid
 
 # Most root fingerprints (as well as EV policy OIDs) are from Chrome:
 # https://code.google.com/p/chromium/codesearch#chromium/src/net/cert/ev_root_ca_metadata.cc

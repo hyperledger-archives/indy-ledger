@@ -1,18 +1,19 @@
 #!/usr/bin/env python
-import gflags
-from google.protobuf import text_format
 import logging
 import os
 import sys
-import requests
 
+import gflags
+import requests
 from ct.cert_analysis import tld_list
-from ct.client.db import sqlite_connection as sqlitecon
 from ct.client import prober
+from ct.client.db import sqlite_connection as sqlitecon
 from ct.client.db import sqlite_log_db
 from ct.client.db import sqlite_temp_db
-from ct.client.db import sqlite_cert_db
 from ct.proto import client_pb2
+from google.protobuf import text_format
+
+from ref.ct.client.db import sqlite_cert_db
 
 FLAGS = gflags.FLAGS
 gflags.DEFINE_string("ctlog_config", "ct/config/logs.config",

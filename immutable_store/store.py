@@ -2,14 +2,7 @@ from abc import abstractmethod, abstractproperty, ABCMeta
 from enum import Enum
 
 
-class StoreType(Enum):
-    sql = 1
-    nosql = 2
-    flatfile = 3
-    inmemory = 4
-
-
-class Properties(Enum):
+class F(Enum):
     client_id = 1
     request_id = 2
     STH = 3
@@ -47,7 +40,7 @@ class ImmutableStore:
         """
 
     @abstractmethod
-    def getTxnBySeqNo(self, seqNo: int):
+    def get(self, seqNo: int):
         """
 
         :param seqNo:
@@ -55,16 +48,10 @@ class ImmutableStore:
         """
 
     @abstractmethod
-    def findTxnByProperties(self, paramAndValues):
+    def find(self, paramAndValues):
         """
         Select entries from the store that match the given parameters.
 
         :param paramAndValues:
         :return:
-        """
-
-    @abstractproperty
-    def storeType(self) -> StoreType:
-        """
-        The type of storage.
         """

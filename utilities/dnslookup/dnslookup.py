@@ -20,9 +20,9 @@ import urllib2
 
 basepath = os.path.dirname(sys.argv[0])
 sys.path.append(os.path.join(basepath, '../../../python'))
-from ct.crypto import verify
+from ref.ct.crypto import verify
 from immutable_store import merkle
-from ct.proto import client_pb2
+from ref.ct.proto import client_pb2
 
 class CTDNSLookup:
     def __init__(self, domain, verifier, resolver=None):

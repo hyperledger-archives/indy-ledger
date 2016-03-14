@@ -8,13 +8,13 @@ import logging
 import sys
 
 import gflags
-
 from ct.client import log_client
 from ct.crypto import cert
 from ct.crypto import verify
 from ct.proto import client_pb2
-from ct.serialization import tls_message
+
 from immutable_store import error
+from ref.ct.serialization import tls_message
 
 FLAGS = gflags.FLAGS
 
@@ -89,8 +89,8 @@ def _submit_to_all_logs(log_list, certs_chain):
                     key_id.encode('hex'))
 
     scts_for_cert = [tls_message.encode(proto_sct)
-            for proto_sct in validated_scts
-            if proto_sct]
+                     for proto_sct in validated_scts
+                     if proto_sct]
     sct_list = client_pb2.SignedCertificateTimestampList()
     sct_list.sct_list.extend(scts_for_cert)
     return tls_message.encode(sct_list)

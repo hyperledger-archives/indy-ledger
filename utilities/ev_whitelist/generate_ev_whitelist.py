@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 """Generates a list of hashes of EV certificates found in a log."""
 
-import hashlib
 import functools
-import pickle
+import hashlib
 import os
+import pickle
 import sys
 
 import ev_metadata
 import gflags
-
 from ct.client import scanner
-from ct.crypto import cert
 from ct.proto import client_pb2
+
+from ref.ct.crypto import cert
 
 FLAGS = gflags.FLAGS
 
