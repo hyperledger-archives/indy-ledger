@@ -1,3 +1,5 @@
+import json
+
 from ledger.immutable_store.error import GeneralMissingError
 from ledger.immutable_store.merkle import TreeHasher
 from ledger.immutable_store.merkle_tree import MerkleTree
@@ -15,14 +17,17 @@ class Ledger:
         self.tree = tree
         self.store = store
         self.hasher = TreeHasher()
-
+        self.serialNo = store.lastCount()
         self.recoverTree()
 
     def recoverTree(self):
-        for entry in self.store.getAll():
-            self._addToTree(entry)
+        for key, entry in self.store.getAll():
+            record = eval(entry.decode('utf-8'))
+            self._addToTree(record)
 
     def add(self, data):
+        data['serial_no'] = (self.serialNo + 1)
+        self.serialNo += 1
         self._addToTree(data)
         self._addToStore(data)
 
@@ -39,6 +44,7 @@ class Ledger:
             raise GeneralMissingError("Transaction not found.")
 
     def _addToStore(self, data):
-        self.store.append(data)
+        key = data['serial_no']
+        self.store.append(key, data)
 
 

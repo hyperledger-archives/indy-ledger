@@ -23,7 +23,7 @@ class ImmutableStore:
     """
 
     @abstractmethod
-    def append(self, record) -> bool:
+    def append(self, key, value) -> bool:
         """
         Append a new record to the immutable ledger
         :param record: The record to append
@@ -54,4 +54,10 @@ class ImmutableStore:
 
         :param paramAndValues:
         :return:
+        """
+
+    @abstractmethod
+    def lastCount(self):
+        """
+        Gives the last serial number in store.
         """

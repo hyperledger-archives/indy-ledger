@@ -1,3 +1,5 @@
+import pytest
+
 from ledger.immutable_store.mongodb_ledger import MongoDBLedger
 
 # TODO These tests will write to local mongoDB, must use a DBUnit instead.
@@ -5,7 +7,7 @@ from ledger.immutable_store.mongodb_ledger import MongoDBLedger
 
 store = MongoDBLedger("testLedger", "ledger")
 
-
+@pytest.skip(msg="Will be deleted in future")
 def testLedgerPersistsOneRecord():
     key = 'client_id'
     record = {key: 1}
@@ -35,5 +37,6 @@ def testConstructSparseMerkleFromCompactMerkleTreeData():
 
 
 # TODO An in-memory store can be used instead of using this tear down logic.
+@pytest.skip(msg="Will be deleted in future")
 def testTearDown():
     store._ledger.drop()

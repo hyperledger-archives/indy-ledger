@@ -1,10 +1,11 @@
-from ledger.immutable_store.ledger import Ledger
-from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher
-from ledger.immutable_store.mongodb_ledger import MongoDBLedger
 import time
 
+from ledger.immutable_store.ledger import Ledger
+from ledger.immutable_store.leveldb_ledger import LevelDBLedger
+from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher
+
 # TODO Remove hard-coded CompactMerkleTree
-ledger_db = MongoDBLedger('testLedger', 'ledger')
+ledger_db = LevelDBLedger("/tmp/testLedger")
 ledger = Ledger(CompactMerkleTree(), ledger_db)
 
 hasher = TreeHasher()
@@ -43,8 +44,7 @@ def testAddTxn():
         'leaf_data_hash': hasher.hash_leaf(bytes(str(txn2), 'utf-8')),
         'created': time.time(),
         'added_to_tree': time.time(),
-        'audit_info': None,
-        'seq_no': 2
+        'audit_info': None
     }
 
 
@@ -73,4 +73,5 @@ def testRecoverMerkleTreeFromLedger():
 
 
 def testTearDown():
-    ledger_db._ledger.drop()
+    ledger_db.drop()
+

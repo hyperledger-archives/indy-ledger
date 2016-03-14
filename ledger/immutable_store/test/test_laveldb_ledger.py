@@ -4,7 +4,10 @@ store = LevelDBLedger("/tmp/testleveldb")
 
 
 def testLevelDBPersistsRecord():
-    key = "client_id"
-    record = {key: 1}
-    store.append(record)
-    assert record[key] == store.find(key)
+    serialno = 2
+    record = {"my code": "my logics"}
+    store.append(serialno, record)
+    assert record == store.get(serialno)
+
+def testTearDownLevelDB():
+    store.drop()
