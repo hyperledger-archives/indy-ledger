@@ -1,4 +1,4 @@
-from immutable_store.merkle_tree import MerkleTree
+from ledger.immutable_store.merkle_tree import MerkleTree
 
 
 class Auditor:

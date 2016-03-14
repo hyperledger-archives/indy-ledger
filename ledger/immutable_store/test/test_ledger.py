@@ -27,7 +27,6 @@ def testAddTxn():
         'created': time.time(),
         'added_to_tree': time.time(),
         'audit_info': None,
-        'seq_no': 1
     }
 
     txn2 = {

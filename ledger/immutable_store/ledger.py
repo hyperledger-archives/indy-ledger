@@ -1,4 +1,4 @@
-import json
+import time
 
 from ledger.immutable_store.error import GeneralMissingError
 from ledger.immutable_store.merkle import TreeHasher
@@ -7,7 +7,6 @@ from ledger.immutable_store.store import ImmutableStore, F
 
 
 class Ledger:
-
     def __init__(self, tree: MerkleTree, store: ImmutableStore):
         """
         :param tree: an implementation of MerkleTree used to store events
@@ -26,8 +25,8 @@ class Ledger:
             self._addToTree(record)
 
     def add(self, data):
-        data['serial_no'] = (self.serialNo + 1)
         self.serialNo += 1
+        data['serial_no'] = self.serialNo
         self._addToTree(data)
         self._addToStore(data)
 
@@ -47,4 +46,26 @@ class Ledger:
         key = data['serial_no']
         self.store.append(key, data)
 
+    async def insertTxn(self, clientId: str, reply, txnId: str):
+        txn = {
+            "clientId": clientId,
+            "reply": reply,
+            "txnId": txnId
+        }
+        data = {
+            'client_id': txn['clientId'],
+            'request_id': 1,
+            'STH': 1,
+            'leaf_data': txn,
+            'leaf_data_hash': self.hasher.hash_leaf(bytes(str(txn), 'utf-8')),
+            'created': time.time(),
+            'added_to_tree': time.time(),
+            'audit_info': None
+        }
+        self.add(data)
+        self.store.insertProcessedReq(clientId, reply.reqId, self.serialNo)
+
+    async def getTxn(self, clientId: str, reqId: int):
+        serialNo = self.store.getProcessedReq(clientId, reqId)
+        return self.store.get(serialNo)
 
