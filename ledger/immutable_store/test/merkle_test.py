@@ -6,7 +6,7 @@ import unittest
 from binascii import hexlify, unhexlify
 from collections import namedtuple
 
-from immutable_store import merkle, error
+from ledger.immutable_store import merkle, error
 
 
 class TreeHasherTest(unittest.TestCase):

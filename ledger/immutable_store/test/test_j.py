@@ -2,7 +2,7 @@ from binascii import hexlify
 
 import pytest
 
-from immutable_store.merkle import CompactMerkleTree, TreeHasher
+from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher
 
 
 @pytest.fixture()

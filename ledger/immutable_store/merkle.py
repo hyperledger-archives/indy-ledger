@@ -25,8 +25,8 @@ import logging
 from base64 import b64encode
 from binascii import hexlify
 
-from immutable_store import error
-from immutable_store.merkle_tree import MerkleTree
+from ledger.immutable_store import error
+from ledger.immutable_store.merkle_tree import MerkleTree
 
 
 def count_bits_set(i):

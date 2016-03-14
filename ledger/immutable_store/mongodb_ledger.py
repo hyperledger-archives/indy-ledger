@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 
-from immutable_store.store import ImmutableStore, F
+from ledger.immutable_store.store import ImmutableStore, F
 
 
 # TODO This class currently connects to a local instance of MongoDB. Must be

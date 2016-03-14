@@ -1,6 +1,6 @@
-from immutable_store.ledger import Ledger
-from immutable_store.merkle import CompactMerkleTree, TreeHasher
-from immutable_store.mongodb_ledger import MongoDBLedger
+from ledger.immutable_store.ledger import Ledger
+from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher
+from ledger.immutable_store.mongodb_ledger import MongoDBLedger
 import time
 
 # TODO Remove hard-coded CompactMerkleTree

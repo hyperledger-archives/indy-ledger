@@ -1,4 +1,4 @@
-from immutable_store.mongodb_ledger import MongoDBLedger
+from ledger.immutable_store.mongodb_ledger import MongoDBLedger
 
 # TODO These tests will write to local mongoDB, must use a DBUnit instead.
 # TODO afterAll must drop the databases

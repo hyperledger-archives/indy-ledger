@@ -1,7 +1,7 @@
-from immutable_store.error import GeneralMissingError
-from immutable_store.merkle import TreeHasher
-from immutable_store.merkle_tree import MerkleTree
-from immutable_store.store import ImmutableStore, F
+from ledger.immutable_store.error import GeneralMissingError
+from ledger.immutable_store.merkle import TreeHasher
+from ledger.immutable_store.merkle_tree import MerkleTree
+from ledger.immutable_store.store import ImmutableStore, F
 
 
 class Ledger:
