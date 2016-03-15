@@ -29,6 +29,8 @@ def testTxnPersistence():
         await ldb.insertTxn(clientId, reply, txnId)
         txn_in_db = await ldb.getTxn(clientId, reply.reqId)
         assert txn_in_db == reply
+        assert ldb.size() == 1
+        ldb.store.drop()
 
     loop.run_until_complete(go())
     loop.close()

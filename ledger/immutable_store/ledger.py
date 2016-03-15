@@ -85,6 +85,9 @@ class Ledger:
                      jsonReply["reqId"],
                      jsonReply["result"])
 
+    def size(self):
+        return self.serialNo
+
     def start(self, loop):
         pass
 

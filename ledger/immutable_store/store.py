@@ -61,3 +61,9 @@ class ImmutableStore:
         """
         Gives the last serial number in store.
         """
+
+    @abstractmethod
+    def size(self):
+        """
+        GIves the num of transcations stored
+        """
