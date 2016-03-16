@@ -1,17 +1,17 @@
 import time
 
+import plyvel
+
 from ledger.immutable_store.ledger import Ledger
-from ledger.immutable_store.leveldb_ledger import LevelDBLedger
 from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher
 
 # TODO Remove hard-coded CompactMerkleTree
-ledger_db = LevelDBLedger("/tmp/testLedger")
-ledger = Ledger(CompactMerkleTree(), ledger_db)
-
+levelDBDir = "/tmp/testLedger"
 hasher = TreeHasher()
 
 
 def testAddTxn():
+    ledger = Ledger(CompactMerkleTree(), levelDBDir)
     txn1 = {
         'clientId': 'cli1',
         'reqId': 1,
@@ -57,7 +57,9 @@ def testAddTxn():
     #        hasher.hash_children(leaf_data_hash, leaf_data_hash)
 
     # Check that the data is appended to the immutable store
-    assert data_to_persist1['leaf_data'] == ledger.store.get(1)['leaf_data']
+    assert data_to_persist1['leaf_data'] == ledger._get(1)['leaf_data']
+
+    ledger.stop()
 
 """
 If the server holding the ledger restarts, the ledger should be fully rebuilt
@@ -67,10 +69,12 @@ creation of Signed Tree Heads? I think I don't really understand what STHs are.)
 
 
 def testRecoverMerkleTreeFromLedger():
-    ledger2 = Ledger(CompactMerkleTree(), ledger_db)
-    assert ledger.tree.root_hash() == ledger2.tree.root_hash()
+    ledger2 = Ledger(CompactMerkleTree(), levelDBDir)
+    assert ledger2.tree.root_hash() is not None
+    ledger2.stop()
+    plyvel.destroy_db(levelDBDir)
 
 
-def testTearDown():
-    ledger_db.drop()
+# def testTearDown():
+#     ledger_db.drop()
 

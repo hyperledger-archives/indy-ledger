@@ -22,48 +22,17 @@ class ImmutableStore:
     Merkle Tree.
     """
 
-    @abstractmethod
-    def append(self, key, value) -> bool:
-        """
-        Append a new record to the immutable ledger
-        :param record: The record to append
-        :return: True if appending is successful
-        """
+    def start(self, loop):
+        raise NotImplementedError()
 
-    @abstractmethod
-    def validate(self, record) -> bool:
-        """
-        Check whether the attributes in the record match the data model.
+    def stop(self):
+        raise NotImplementedError()
 
-        :param record: the record to validate
-        :return: True if valid
-        """
+    async def append(self, clientId: str, reply, txnId: str):
+        raise NotImplementedError()
 
-    @abstractmethod
-    def get(self, seqNo: int):
-        """
+    async def get(self, clientId: str, reqId: int):
+        raise NotImplementedError()
 
-        :param seqNo:
-        :return:
-        """
-
-    @abstractmethod
-    def find(self, paramAndValues):
-        """
-        Select entries from the store that match the given parameters.
-
-        :param paramAndValues:
-        :return:
-        """
-
-    @abstractmethod
-    def lastCount(self):
-        """
-        Gives the last serial number in store.
-        """
-
-    @abstractmethod
-    def size(self):
-        """
-        GIves the num of transcations stored
-        """
+    def size(self) -> int:
+        raise NotImplementedError()
