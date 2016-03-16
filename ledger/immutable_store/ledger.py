@@ -22,7 +22,10 @@ class Ledger(ImmutableStore):
         self.dir = dir
         self.tree = tree
         self.hasher = TreeHasher()
-        self.start(None)
+        self._db = None
+        self._reply = None
+        self._processedReq = None
+        self.start()
         self.serialNo = self.lastCount()
         self.recoverTree()
 
@@ -121,12 +124,14 @@ class Ledger(ImmutableStore):
     def size(self):
         return self.serialNo
 
-    def start(self, loop):
-        logging.info("Starting ledger...")
-        self._db = plyvel.DB(self.dir, create_if_missing=True)
-        self._reply = self._db.prefixed_db(b'reply')
-        self._processedReq = self._db.prefixed_db(b'processedReq')
+    def start(self, loop=None):
+        if self._reply or self._processedReq:
+            logging.info("Ledger already started.")
+        else:
+            logging.info("Starting ledger...")
+            self._db = plyvel.DB(self.dir, create_if_missing=True)
+            self._reply = self._db.prefixed_db(b'reply')
+            self._processedReq = self._db.prefixed_db(b'processedReq')
 
     def stop(self):
         self._db.close()
-
