@@ -1,6 +1,7 @@
 import logging
 import time
 from collections import namedtuple
+import pickle
 
 import plyvel
 
@@ -31,7 +32,7 @@ class Ledger(ImmutableStore):
 
     def recoverTree(self):
         for key, entry in self._reply.iterator():
-            record = eval(entry.decode('utf-8'))
+            record = pickle.loads(entry)
             self._addToTree(record)
 
     def add(self, data):
@@ -55,7 +56,7 @@ class Ledger(ImmutableStore):
     def _addToStore(self, data):
         serialNo = data['serial_no']
         key = bytes(str(serialNo).encode('utf-8'))
-        self._reply.put(key, bytes(str(data), 'utf-8'))
+        self._reply.put(key, pickle.dumps(data))
 
     async def append(self, clientId: str, reply, txnId: str):
         txn = {
@@ -82,13 +83,13 @@ class Ledger(ImmutableStore):
             jsonReply = self._get(serialNo)[F.leaf_data.name]['reply']
             return self._createReplyFromJson(jsonReply)
         else:
-            return serialNo
+            return None
 
     def _get(self, serialNo):
         key = str(serialNo).encode('utf-8')
         value = self._reply.get(key)
         if value:
-            return eval(value.decode('utf-8'))
+            return pickle.loads(value)
         else:
             return value
 
@@ -103,7 +104,7 @@ class Ledger(ImmutableStore):
         if serialNo:
             return serialNo.decode('utf-8')
         else:
-            return serialNo
+            return None
 
     def _createReplyRecord(self, reply):
         return {
@@ -137,5 +138,8 @@ class Ledger(ImmutableStore):
         self._db.close()
 
     def getAllTxn(self):
-        return {txnId.decode(): reply.decode() for txnId, reply in
-         self._reply.iterator()}
+        result = {}
+        for txnId, reply in self._reply.iterator():
+            result[txnId.decode()] = pickle.loads(reply)['leaf_data']['reply'][
+                'result']
+        return result
