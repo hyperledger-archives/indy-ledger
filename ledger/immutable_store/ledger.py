@@ -135,3 +135,7 @@ class Ledger(ImmutableStore):
 
     def stop(self):
         self._db.close()
+
+    def getAllTxn(self):
+        return {txnId.decode(): reply.decode() for txnId, reply in
+         self._reply.iterator()}
