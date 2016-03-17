@@ -13,13 +13,13 @@ hasher = TreeHasher()
 def testAddTxn():
     ledger = Ledger(CompactMerkleTree(), levelDBDir)
     txn1 = {
-        'clientId': 'cli1',
+        'identifier': 'cli1',
         'reqId': 1,
         'op': 'do something',
         'reference': 'K2GI8SX89'
     }
     data_to_persist1 = {
-        'client_id': txn1['clientId'],
+        'identifier': txn1['identifier'],
         'request_id': 1,
         'STH': 1,
         'leaf_data': txn1,
@@ -30,13 +30,13 @@ def testAddTxn():
     }
 
     txn2 = {
-        'clientId': 'cli1',
+        'identifier': 'cli1',
         'reqId': 2,
         'op': 'do something',
         'reference': 'K2GI8SX89'
     }
     data_to_persist2 = {
-        'client_id': txn2['clientId'],
+        'identifier': txn2['identifier'],
         'request_id': 2,
         'STH': 2,
         'leaf_data': txn2,

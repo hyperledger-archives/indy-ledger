@@ -58,14 +58,14 @@ class Ledger(ImmutableStore):
         key = bytes(str(serialNo).encode('utf-8'))
         self._reply.put(key, pickle.dumps(data))
 
-    async def append(self, clientId: str, reply, txnId: str):
+    async def append(self, identifier: str, reply, txnId: str):
         txn = {
-            "clientId": clientId,
+            "identifier": identifier,
             "reply": self._createReplyRecord(reply),
             "txnId": txnId
         }
         data = {
-            'client_id': txn['clientId'],
+            'identifier': txn['identifier'],
             'request_id': 1,
             'STH': 1,
             'leaf_data': txn,
@@ -75,10 +75,10 @@ class Ledger(ImmutableStore):
             'audit_info': None
         }
         self.add(data)
-        self.insertProcessedReq(clientId, reply.reqId, self.serialNo)
+        self.insertProcessedReq(identifier, reply.reqId, self.serialNo)
 
-    async def get(self, clientId: str, reqId: int):
-        serialNo = self.getProcessedReq(clientId, reqId)
+    async def get(self, identifier: str, reqId: int):
+        serialNo = self.getProcessedReq(identifier, reqId)
         if serialNo:
             jsonReply = self._get(serialNo)[F.leaf_data.name]['reply']
             return self._createReplyFromJson(jsonReply)
@@ -93,13 +93,13 @@ class Ledger(ImmutableStore):
         else:
             return value
 
-    def insertProcessedReq(self, clientId, reqId, serial_no):
-        key = bytes((clientId + "-" + str(reqId)), 'utf-8')
+    def insertProcessedReq(self, identifier, reqId, serial_no):
+        key = bytes((identifier + "-" + str(reqId)), 'utf-8')
         value = bytes(str(serial_no), 'utf-8')
         self._processedReq.put(key, value)
 
-    def getProcessedReq(self, clientId, reqId):
-        key = bytes((clientId + "-" + str(reqId)), 'utf-8')
+    def getProcessedReq(self, identifier, reqId):
+        key = bytes((identifier + "-" + str(reqId)), 'utf-8')
         serialNo = self._processedReq.get(key)
         if serialNo:
             return serialNo.decode('utf-8')

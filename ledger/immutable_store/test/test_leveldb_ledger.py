@@ -13,11 +13,11 @@ def testTxnPersistence():
     loop = asyncio.get_event_loop()
     ldb = Ledger(CompactMerkleTree(), levelDBDir)
     async def go():
-        clientId = "testClientId"
+        identifier = "testClientId"
         txnId = "txnId"
         reply = Reply(1, 1, "theresult")
-        await ldb.append(clientId, reply, txnId)
-        txn_in_db = await ldb.get(clientId, reply.reqId)
+        await ldb.append(identifier, reply, txnId)
+        txn_in_db = await ldb.get(identifier, reply.reqId)
         assert txn_in_db == reply
         assert ldb.size() == 1
         ldb.stop()
