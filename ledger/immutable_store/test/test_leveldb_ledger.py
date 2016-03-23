@@ -1,8 +1,6 @@
 import asyncio
 from collections import namedtuple
 
-import plyvel
-
 from ledger.immutable_store.ledger import Ledger
 from ledger.immutable_store.merkle import CompactMerkleTree
 
@@ -22,8 +20,8 @@ def testTxnPersistence():
         txn_in_db = await ldb.get(identifier, reply.reqId)
         assert txn_in_db == reply
         assert ldb.size() == sizeBeforeInsert + 1
+        ldb.reset()
         ldb.stop()
 
     loop.run_until_complete(go())
     loop.close()
-    plyvel.destroy_db(levelDBDir)

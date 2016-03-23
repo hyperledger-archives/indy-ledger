@@ -1,6 +1,5 @@
 import time
 
-import plyvel
 
 from ledger.immutable_store.ledger import Ledger
 from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher
