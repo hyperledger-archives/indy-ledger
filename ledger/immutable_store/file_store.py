@@ -39,7 +39,6 @@ class FileStore:
         for k, v in self.iterator():
             if k == key:
                 return v
-        raise KeyError("Key not found")
 
     def _keyIterator(self, lines):
         for line in lines:
