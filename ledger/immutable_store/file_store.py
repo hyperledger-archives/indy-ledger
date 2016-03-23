@@ -5,7 +5,7 @@ class FileStore:
     def __init__(self, dbDir, dbName):
         # This is the separator between key and value
         self.delimiter = b"\t"
-        # TODO: This line separator might collide with some data format.
+        # TODO: This line separator might conflict with some data format.
         # So prefix the value data in the file with size and only read those
         # number of bytes.
         self.lineSep = b'\n\x07\n\x01'
@@ -22,12 +22,12 @@ class FileStore:
 
     def _initDB(self, dbDir, dbName):
         self._prepareDBLocation(dbDir, dbName)
-        self.dbPath = os.path.join(dbDir, "{}.txt".format(dbName))
+        self.dbPath = os.path.join(dbDir, "{}.bin".format(dbName))
         self._dbFile = open(self.dbPath, mode="a+b", buffering=0)
 
     def put(self, key, value):
         if not (self._isBytes(key) or self._isBytes(value)):
-            raise ValueError("Key and value need to be bytes-like object")
+            raise ValueError("key and value need to be bytes-like object")
         self._dbFile.write(key)
         self._dbFile.write(self.delimiter)
         self._dbFile.write(value)
@@ -35,36 +35,45 @@ class FileStore:
 
     def get(self, key):
         if not self._isBytes(key):
-            raise TypeError("Key needs to be a bytes-like object")
+            raise TypeError("key needs to be a bytes-like object")
         for k, v in self.iterator():
             if k == key:
                 return v
 
-    def _keyIterator(self, lines):
+    def _keyIterator(self, lines, prefix=None):
         for line in lines:
-            yield line.split(self.delimiter, 1)[0]
+            k, v = line.split(self.delimiter, 1)
+            if not prefix or k.startswith(prefix):
+                yield k
 
-    def _valueIterator(self, lines):
+    def _valueIterator(self, lines, prefix=None):
         for line in lines:
-            yield line.split(self.delimiter, 1)[1]
+            k, v = line.split(self.delimiter, 1)
+            if not prefix or k.startswith(prefix):
+                yield v
 
-    def _keyValueIterator(self, lines):
+    def _keyValueIterator(self, lines, prefix=None):
         for line in lines:
-            yield tuple(line.split(self.delimiter, 1))
+            k, v = line.split(self.delimiter, 1)
+            if not prefix or k.startswith(prefix):
+                yield (k, v)
 
-    def iterator(self, include_key=True, include_value=True):
+    def iterator(self, include_key=True, include_value=True, prefix=None):
         if not (include_key or include_value):
             raise ValueError("At least one include_key or include_value "
                              "should be true")
+        if prefix and not self._isBytes(prefix):
+            raise TypeError("prefix needs to be a bytes-like object")
+
         self._dbFile.seek(0)
         lines = (line.strip(self.lineSep) for line in self._dbFile.read().split(self.lineSep)
                  if line.strip(self.lineSep) != b'')
         if include_key and include_value:
-            return self._keyValueIterator(lines)
+            return self._keyValueIterator(lines, prefix=prefix)
         elif include_value:
-            return self._valueIterator(lines)
+            return self._valueIterator(lines, prefix=prefix)
         else:
-            return self._keyValueIterator(lines)
+            return self._keyValueIterator(lines, prefix=prefix)
 
     @property
     def lastKey(self):

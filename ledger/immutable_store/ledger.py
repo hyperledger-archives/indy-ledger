@@ -3,8 +3,6 @@ import time
 from collections import namedtuple
 import pickle
 
-import plyvel
-
 from ledger.immutable_store.error import GeneralMissingError
 from ledger.immutable_store.file_store import FileStore
 from ledger.immutable_store.merkle import TreeHasher
@@ -50,7 +48,6 @@ class Ledger(ImmutableStore):
         elif leaf_data:
             leaf_hash = self.hasher.hash_leaf(bytes(str(leaf_data), 'utf-8'))
             self.tree.append(leaf_hash)
-            leaf_data_hash = leaf_hash
         else:
             raise GeneralMissingError("Transaction not found.")
 
