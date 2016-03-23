@@ -73,7 +73,7 @@ class FileStore:
         elif include_value:
             return self._valueIterator(lines, prefix=prefix)
         else:
-            return self._keyValueIterator(lines, prefix=prefix)
+            return self._keyIterator(lines, prefix=prefix)
 
     @property
     def lastKey(self):
