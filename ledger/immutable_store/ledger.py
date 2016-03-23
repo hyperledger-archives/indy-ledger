@@ -6,6 +6,7 @@ import pickle
 import plyvel
 
 from ledger.immutable_store.error import GeneralMissingError
+from ledger.immutable_store.file_store import FileStore
 from ledger.immutable_store.merkle import TreeHasher
 from ledger.immutable_store.merkle_tree import MerkleTree
 from ledger.immutable_store.store import ImmutableStore, F
@@ -14,13 +15,13 @@ Reply = namedtuple('Reply', ['viewNo', 'reqId', 'result'])
 
 
 class Ledger(ImmutableStore):
-    def __init__(self, tree: MerkleTree, dir: str):
+    def __init__(self, tree: MerkleTree, dataDir: str):
         """
         :param tree: an implementation of MerkleTree used to store events
         """
         # TODO The initialization logic should take care of migrating the
         # persisted data into a newly created Merkle Tree after server restart.
-        self.dir = dir
+        self.dataDir = dataDir
         self.tree = tree
         self.hasher = TreeHasher()
         self._db = None
@@ -118,9 +119,8 @@ class Ledger(ImmutableStore):
                      jsonReply["result"])
 
     def lastCount(self):
-        for key, _ in self._reply.iterator(reverse=True):
-            return int(key.decode('utf-8'))
-        return 0
+        key = self._reply.lastKey
+        return 0 if key is None else int(int(key.decode('utf-8')))
 
     def size(self):
         return self.serialNo
@@ -130,12 +130,19 @@ class Ledger(ImmutableStore):
             logging.info("Ledger already started.")
         else:
             logging.info("Starting ledger...")
-            self._db = plyvel.DB(self.dir, create_if_missing=True)
-            self._reply = self._db.prefixed_db(b'reply')
-            self._processedReq = self._db.prefixed_db(b'processedReq')
+            # self._db = plyvel.DB(self.dir, create_if_missing=True)
+            # self._reply = self._db.prefixed_db(b'reply')
+            # self._processedReq = self._db.prefixed_db(b'processedReq')
+            self._reply = FileStore(self.dataDir, "reply")
+            self._processedReq = FileStore(self.dataDir, "processedReq")
 
     def stop(self):
-        self._db.close()
+        self._reply.close()
+        self._processedReq.close()
+
+    def reset(self):
+        self._reply.reset()
+        self._processedReq.reset()
 
     def getAllTxn(self):
         result = {}

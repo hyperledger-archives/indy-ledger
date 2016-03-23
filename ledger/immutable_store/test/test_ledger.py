@@ -58,8 +58,7 @@ def testAddTxn():
 
     # Check that the data is appended to the immutable store
     assert data_to_persist1['leaf_data'] == ledger._get(1)['leaf_data']
-
-    ledger.stop()
+    ledger.reset()
 
 """
 If the server holding the ledger restarts, the ledger should be fully rebuilt
@@ -71,8 +70,8 @@ creation of Signed Tree Heads? I think I don't really understand what STHs are.)
 def testRecoverMerkleTreeFromLedger():
     ledger2 = Ledger(CompactMerkleTree(), levelDBDir)
     assert ledger2.tree.root_hash() is not None
+    ledger2.reset()
     ledger2.stop()
-    plyvel.destroy_db(levelDBDir)
 
 
 # def testTearDown():
