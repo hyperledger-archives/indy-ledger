@@ -1,4 +1,5 @@
 import os
+from hashlib import sha256
 
 
 class FileStore:
@@ -15,6 +16,14 @@ class FileStore:
         self._dbFile.write(key)
         self._dbFile.write(self.delimiter)
         self._dbFile.write(value)
+        self._dbFile.write(self.delimiter)
+        # TODO: Consider storing hash optional. The challenge is that then
+        # during parsing it has to be checked whether hash is present or not.
+        # That can be a trouble id the delimiter is also present insde the value
+        if isinstance(value, str):
+            value = value.encode()
+        hash = sha256(value).hexdigest()
+        self._dbFile.write(hash)
         self._dbFile.write(self.lineSep)
 
     def get(self, key):
@@ -31,14 +40,16 @@ class FileStore:
     def _valueIterator(self, lines, prefix=None):
         for line in lines:
             k, v = line.split(self.delimiter, 1)
+            value, hash = v.rsplit(self.delimiter, 1)
             if not prefix or k.startswith(prefix):
-                yield v
+                yield value
 
     def _keyValueIterator(self, lines, prefix=None):
         for line in lines:
             k, v = line.split(self.delimiter, 1)
+            value, hash = v.rsplit(self.delimiter, 1)
             if not prefix or k.startswith(prefix):
-                yield (k, v)
+                yield (k, value)
 
     def _getLines(self):
         raise NotImplementedError()

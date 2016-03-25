@@ -49,6 +49,8 @@ class Ledger(ImmutableStore):
         leaf_data_hash = data[F.leaf_data_hash.name]
         leaf_data = data[F.leaf_data.name]
         if leaf_data_hash:
+            if isinstance(leaf_data_hash, str):
+                leaf_data_hash = leaf_data_hash.encode()
             self.tree.append(leaf_data_hash)
         elif leaf_data:
             leaf_hash = self.hasher.hash_leaf(self.serializer.serialize(
