@@ -22,7 +22,8 @@ def testAddTxn():
         'request_id': 1,
         'STH': 1,
         'leaf_data': txn1,
-        'leaf_data_hash': hasher.hash_leaf(bytes(str(txn1), 'utf-8')),
+        'leaf_data_hash': hasher.hash_leaf(ledger.serializer.serialize(
+            txn1, fields=["identifier", "reqId", "op", "reference"])),
         'created': time.time(),
         'added_to_tree': time.time(),
         'audit_info': None,
@@ -39,12 +40,12 @@ def testAddTxn():
         'request_id': 2,
         'STH': 2,
         'leaf_data': txn2,
-        'leaf_data_hash': hasher.hash_leaf(bytes(str(txn2), 'utf-8')),
+        'leaf_data_hash': hasher.hash_leaf(ledger.serializer.serialize(
+            txn1, fields=["identifier", "reqId", "op", "reference"])),
         'created': time.time(),
         'added_to_tree': time.time(),
         'audit_info': None
     }
-
 
     ledger.add(data_to_persist1)
     ledger.add(data_to_persist2)
