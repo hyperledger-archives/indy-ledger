@@ -137,9 +137,9 @@ class Ledger(ImmutableStore):
 
     def start(self, loop=None):
         if self._reply or self._processedReq:
-            logging.info("Ledger already started.")
+            logging.debug("Ledger already started.")
         else:
-            logging.info("Starting ledger...")
+            logging.debug("Starting ledger...")
             self._reply = TextFileStore(self.dataDir, "reply")
             self._processedReq = TextFileStore(self.dataDir, "processedReq")
 
