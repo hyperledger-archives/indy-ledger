@@ -10,6 +10,7 @@ from ledger.immutable_store.merkle_tree import MerkleTree
 from ledger.immutable_store.store import ImmutableStore, F
 from ledger.immutable_store.text_file_store import TextFileStore
 
+
 Reply = namedtuple('Reply', ['viewNo', 'reqId', 'result'])
 
 
@@ -30,9 +31,6 @@ class Ledger(ImmutableStore):
         self.start()
         self.serialNo = self.lastCount()
         self.recoverTree()
-        self._leafDataFields = ["identifier", "request_id", "STH",
-                                "leaf_data", "leaf_data_hash", "created",
-                                "added_to_tree", "audit_info", "serial_no"]
 
     def recoverTree(self):
         for key, entry in self._reply.iterator():
@@ -54,7 +52,7 @@ class Ledger(ImmutableStore):
             self.tree.append(leaf_data_hash)
         elif leaf_data:
             leaf_hash = self.hasher.hash_leaf(self.serializer.serialize(
-                leaf_data, fields=self._leafDataFields))
+                leaf_data))
             self.tree.append(leaf_hash)
         else:
             raise GeneralMissingError("Transaction not found.")
@@ -63,25 +61,17 @@ class Ledger(ImmutableStore):
         serialNo = data['serial_no']
         key = str(serialNo)
         self._reply.put(key, self.serializer.serialize(
-            data, fields=self._leafDataFields, toBytes=False))
+            data, toBytes=False))
 
     async def append(self, identifier: str, reply, txnId: str):
-        txn = {
-            "identifier": identifier,
-            "reply": self._createReplyRecord(reply),
-            "txnId": txnId
-        }
         # TODO: STH and audit_info are missing Merkle tree is implementation
         # is incomplete
         data = {
-            'identifier': txn['identifier'],
-            'request_id': reply.reqId,
             'STH': 1,
-            'leaf_data': txn,
+            'leaf_data': reply.result,
             'leaf_data_hash': self.hasher.hash_leaf(self.serializer.serialize(
-                txn, fields=["identifier", "reply", "txnId"])
+                reply.result)
             ),
-            'created': time.time(),
             'added_to_tree': time.time(),
             'audit_info': None
         }
@@ -91,8 +81,7 @@ class Ledger(ImmutableStore):
     async def get(self, identifier: str, reqId: int):
         serialNo = self.getProcessedReq(identifier, reqId)
         if serialNo:
-            jsonReply = self._get(serialNo)[F.leaf_data.name]['reply']
-            return self._createReplyFromJson(jsonReply)
+            return self._get(serialNo)[F.leaf_data.name]
         else:
             return None
 
@@ -116,17 +105,6 @@ class Ledger(ImmutableStore):
             return serialNo
         else:
             return None
-
-    def _createReplyRecord(self, reply):
-        return {
-            "viewNo": reply.viewNo,
-            "reqId": reply.reqId,
-            "result": reply.result}
-
-    def _createReplyFromJson(self, jsonReply):
-        return Reply(jsonReply["viewNo"],
-                     jsonReply["reqId"],
-                     jsonReply["result"])
 
     def lastCount(self):
         key = self._reply.lastKey
@@ -155,5 +133,5 @@ class Ledger(ImmutableStore):
         result = {}
         for txnId, reply in self._reply.iterator():
             result[txnId] = self.serializer.\
-                deserialize(reply)['leaf_data']['reply']['result']
+                deserialize(reply)['leaf_data']
         return result

@@ -18,7 +18,7 @@ def testTxnPersistence():
         sizeBeforeInsert = ldb.size()
         await ldb.append(identifier, reply, txnId)
         txn_in_db = await ldb.get(identifier, reply.reqId)
-        assert txn_in_db == reply
+        assert txn_in_db == reply.result
         assert ldb.size() == sizeBeforeInsert + 1
         ldb.reset()
         ldb.stop()

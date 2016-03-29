@@ -28,19 +28,10 @@ class Base64Serializer(MappingSerializer):
     jsonEncoder = OrderedJsonEncoder()
 
     def serialize(self, data: Dict, fields=None, toBytes=True):
-        # data = deepcopy(data)
-        # orderedData = OrderedDict()
-        # for f in fields:
-        #     if f in data:
-        #         orderedData[f] = data.pop(f)
-        # assert not data
-        # jsonData = self.jsonEncoder.encode(orderedData)
         encoded = self.jsonEncoder.encode(data)
-        # encoded = base64.b64encode(jsonData.encode())
         if toBytes:
             encoded = encoded.encode()
         return encoded
 
     def deserialize(self, data):
-        # jsonData = base64.b64decode(data).decode('utf-8')
         return json.loads(data)

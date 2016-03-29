@@ -18,13 +18,10 @@ def testAddTxn():
         'reference': 'K2GI8SX89'
     }
     data_to_persist1 = {
-        'identifier': txn1['identifier'],
-        'request_id': 1,
         'STH': 1,
         'leaf_data': txn1,
         'leaf_data_hash': hasher.hash_leaf(ledger.serializer.serialize(
-            txn1, fields=["identifier", "reqId", "op", "reference"])),
-        'created': time.time(),
+            txn1)),
         'added_to_tree': time.time(),
         'audit_info': None,
     }
@@ -36,13 +33,10 @@ def testAddTxn():
         'reference': 'K2GI8SX89'
     }
     data_to_persist2 = {
-        'identifier': txn2['identifier'],
-        'request_id': 2,
         'STH': 2,
         'leaf_data': txn2,
         'leaf_data_hash': hasher.hash_leaf(ledger.serializer.serialize(
-            txn1, fields=["identifier", "reqId", "op", "reference"])),
-        'created': time.time(),
+            txn1)),
         'added_to_tree': time.time(),
         'audit_info': None
     }
@@ -52,9 +46,6 @@ def testAddTxn():
 
     # Check that the transaction is added to the Merkle Tree
     assert len(ledger.tree) == 2
-    # leaf_data_hash = data_to_persist1['leaf_data_hash']
-    # assert ledger.tree.root_hash() == \
-    #        hasher.hash_children(leaf_data_hash, leaf_data_hash)
 
     # Check that the data is appended to the immutable store
     assert data_to_persist1['leaf_data'] == ledger._get(1)['leaf_data']
