@@ -6,6 +6,7 @@ import json
 
 from ledger.immutable_store.base64_serializer import Base64Serializer
 from ledger.immutable_store.error import GeneralMissingError
+from ledger.immutable_store.mappingserializer import MappingSerializer
 from ledger.immutable_store.merkle import TreeHasher
 from ledger.immutable_store.merkle_tree import MerkleTree
 from ledger.immutable_store.store import ImmutableStore, F
@@ -65,16 +66,15 @@ class Ledger(ImmutableStore):
             data, toBytes=False))
 
     async def append(self, identifier: str, reply, txnId: str):
-        # TODO: STH and audit_info are missing Merkle tree is implementation
+        # TODO: audit_info are missing Merkle tree is implementation
         # is incomplete
         data = {
-            'STH': self._getSTH(),
+            'STH': self.getSTH(),
             'leaf_data': reply.result,
             'leaf_data_hash': self.hasher.hash_leaf(self.serializer.serialize(
                 reply.result)
             ),
-            'added_to_tree': time.time(),
-            'audit_info': None
+            'audit_info': None      # TODO: Implement this
         }
 
         self.add(data)
@@ -112,7 +112,7 @@ class Ledger(ImmutableStore):
         key = self._reply.lastKey
         return 0 if key is None else int(key)
 
-    def _getSTH(self):
+    def getSTH(self):
         return {
             "version": "0.0.1",
             "signature_type": "tree_hash",

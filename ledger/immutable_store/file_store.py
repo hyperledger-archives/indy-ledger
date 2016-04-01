@@ -12,6 +12,7 @@ class FileStore:
     def _initDB(self, dbDir, dbName):
         self._prepareDBLocation(dbDir, dbName)
 
+    # noinspection PyUnresolvedReferences
     def put(self, key, value):
         self._dbFile.write(key)
         self._dbFile.write(self.delimiter)
@@ -19,24 +20,27 @@ class FileStore:
         self._dbFile.write(self.delimiter)
         # TODO: Consider storing hash optional. The challenge is that then
         # during parsing it has to be checked whether hash is present or not.
-        # That can be a trouble id the delimiter is also present insde the value
+        # That can be a trouble id the delimiter is also present inside the value
         if isinstance(value, str):
             value = value.encode()
         hash = sha256(value).hexdigest()
         self._dbFile.write(hash)
         self._dbFile.write(self.lineSep)
+        self._dbFile.flush()
 
     def get(self, key):
         for k, v in self.iterator():
             if k == key:
                 return v
 
+    # noinspection PyUnresolvedReferences
     def _keyIterator(self, lines, prefix=None):
         for line in lines:
             k, v = line.split(self.delimiter, 1)
             if not prefix or k.startswith(prefix):
                 yield k
 
+    # noinspection PyUnresolvedReferences
     def _valueIterator(self, lines, prefix=None):
         for line in lines:
             k, v = line.split(self.delimiter, 1)
@@ -44,6 +48,7 @@ class FileStore:
             if not prefix or k.startswith(prefix):
                 yield value
 
+    # noinspection PyUnresolvedReferences
     def _keyValueIterator(self, lines, prefix=None):
         for line in lines:
             k, v = line.split(self.delimiter, 1)
@@ -54,6 +59,7 @@ class FileStore:
     def _getLines(self):
         raise NotImplementedError()
 
+    # noinspection PyUnresolvedReferences
     def iterator(self, include_key=True, include_value=True, prefix=None):
         if not (include_key or include_value):
             raise ValueError("At least one include_key or include_value "
@@ -82,8 +88,10 @@ class FileStore:
     def numKeys(self):
         return sum(1 for l in self.iterator())
 
+    # noinspection PyUnresolvedReferences
     def close(self):
         self._dbFile.close()
 
+    # noinspection PyUnresolvedReferences
     def reset(self):
         self._dbFile.truncate(0)

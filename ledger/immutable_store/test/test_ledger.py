@@ -18,13 +18,14 @@ def testAddTxn():
         'reference': 'K2GI8SX89'
     }
     data_to_persist1 = {
-        'STH': 1,
+        'STH': ledger.getSTH(),
         'leaf_data': txn1,
         'leaf_data_hash': hasher.hash_leaf(ledger.serializer.serialize(
             txn1)),
-        'added_to_tree': time.time(),
         'audit_info': None,
     }
+
+    ledger.add(data_to_persist1)
 
     txn2 = {
         'identifier': 'cli1',
@@ -33,15 +34,13 @@ def testAddTxn():
         'reference': 'K2GI8SX89'
     }
     data_to_persist2 = {
-        'STH': 2,
+        'STH': ledger.getSTH(),
         'leaf_data': txn2,
         'leaf_data_hash': hasher.hash_leaf(ledger.serializer.serialize(
             txn1)),
-        'added_to_tree': time.time(),
         'audit_info': None
     }
 
-    ledger.add(data_to_persist1)
     ledger.add(data_to_persist2)
 
     # Check that the transaction is added to the Merkle Tree
