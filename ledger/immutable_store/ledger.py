@@ -1,3 +1,4 @@
+import datetime
 import logging
 import time
 from collections import namedtuple
@@ -65,14 +66,15 @@ class Ledger(ImmutableStore):
         }
         data = {
             'client_id': txn['clientId'],
-            'request_id': 1,
-            'STH': 1,
+            'request_id': txn['reply']['reqId'],
+            'STH': self._getSTH(),
             'leaf_data': txn,
             'leaf_data_hash': self.hasher.hash_leaf(bytes(str(txn), 'utf-8')),
             'created': time.time(),
             'added_to_tree': time.time(),
             'audit_info': None
         }
+
         self.add(data)
         self.insertProcessedReq(clientId, reply.reqId, self.serialNo)
 
@@ -120,6 +122,15 @@ class Ledger(ImmutableStore):
         for key, _ in self._reply.iterator(reverse=True):
             return int(key.decode('utf-8'))
         return 0
+
+    def _getSTH(self):
+        return {
+            "version": "0.0.1",
+            "signature_type": "tree_hash",
+            "timestamp": str(datetime.datetime.utcnow()),
+            "tree_size": self.tree.tree_size + 1,
+            "sha256_root_hash": self.tree.root_hash_hex()
+        }
 
     def size(self):
         return self.serialNo

@@ -17,6 +17,7 @@ def testTxnPersistence():
         txnId = "txnId"
         reply = Reply(1, 1, "theresult")
         await ldb.append(clientId, reply, txnId)
+        assert ldb._get(1)['STH']['tree_size'] == 1
         txn_in_db = await ldb.get(clientId, reply.reqId)
         assert txn_in_db == reply
         assert ldb.size() == 1
