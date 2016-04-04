@@ -3,6 +3,9 @@ from hashlib import sha256
 
 
 class FileStore:
+    def __init__(self, dbDir, dbName, keyIsLineNo: bool=False):
+        raise NotImplementedError
+
     def _prepareDBLocation(self, dbDir, dbName):
         self.dbDir = dbDir
         self.dbName = dbName
@@ -14,8 +17,9 @@ class FileStore:
 
     # noinspection PyUnresolvedReferences
     def put(self, key, value):
-        self._dbFile.write(key)
-        self._dbFile.write(self.delimiter)
+        if not self.keyIsLineNo:
+            self._dbFile.write(key)
+            self._dbFile.write(self.delimiter)
         self._dbFile.write(value)
         self._dbFile.write(self.delimiter)
         # TODO: Consider storing hash optional. The challenge is that then
@@ -35,23 +39,40 @@ class FileStore:
 
     # noinspection PyUnresolvedReferences
     def _keyIterator(self, lines, prefix=None):
+        i = 0
         for line in lines:
-            k, v = line.split(self.delimiter, 1)
+            if self.keyIsLineNo:
+                k = str(i)
+                i += 1
+            else:
+                k, v = line.split(self.delimiter, 1)
             if not prefix or k.startswith(prefix):
                 yield k
 
     # noinspection PyUnresolvedReferences
     def _valueIterator(self, lines, prefix=None):
+        i = 0
         for line in lines:
-            k, v = line.split(self.delimiter, 1)
+            if self.keyIsLineNo:
+                k = str(i)
+                v = line
+                i += 1
+            else:
+                k, v = line.split(self.delimiter, 1)
             value, hash = v.rsplit(self.delimiter, 1)
             if not prefix or k.startswith(prefix):
                 yield value
 
     # noinspection PyUnresolvedReferences
     def _keyValueIterator(self, lines, prefix=None):
+        i = 0
         for line in lines:
-            k, v = line.split(self.delimiter, 1)
+            if self.keyIsLineNo:
+                k = str(i)
+                v = line
+                i += 1
+            else:
+                k, v = line.split(self.delimiter, 1)
             value, hash = v.rsplit(self.delimiter, 1)
             if not prefix or k.startswith(prefix):
                 yield (k, value)

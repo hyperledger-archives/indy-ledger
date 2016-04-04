@@ -30,10 +30,10 @@ class MongoDBLedger(ImmutableStore):
                    for x in record.keys())
 
     def get(self, seqNo: int):
-        return self._ledger.find_one({F.seq_no.name: seqNo})
+        return self._ledger.find_one({F.serial_no.name: seqNo})
 
     def find(self, propertyMap: dict):
         return self._ledger.find(propertyMap)
 
     def getAll(self):
-        return self._ledger.find().sort(F.seq_no.name, 1)
+        return self._ledger.find().sort(F.serial_no.name, 1)

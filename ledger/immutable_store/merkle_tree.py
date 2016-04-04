@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, abstractproperty
 from typing import List, Tuple
 
 
@@ -42,6 +42,18 @@ class MerkleTree:
     def validate(self, event):
         """
         """
+
+    @abstractmethod
+    def inclusion_proof(self, m, n):
+        pass
+
+    @abstractmethod
+    def root_hash_hex(self):
+        pass
+
+    @abstractproperty
+    def tree_size(self):
+        pass
 
 
 class PersistentMerkleTree(MerkleTree):

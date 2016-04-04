@@ -15,12 +15,12 @@ def testTxnPersistence():
             identifier = "testClientId"
             txnId = "txnId"
             reply = Reply(1, 1, "theresult")
-            sizeBeforeInsert = ldb.size()
+            sizeBeforeInsert = ldb.size
             await ldb.append(identifier, reply, txnId)
-            assert ldb._get(1)['STH']['tree_size'] == 1
+            assert ldb.getBySerialNo(0)['STH']['tree_size'] == 1
             txn_in_db = await ldb.get(identifier, reply.reqId)
             assert txn_in_db == reply.result
-            assert ldb.size() == sizeBeforeInsert + 1
+            assert ldb.size == sizeBeforeInsert + 1
             ldb.reset()
             ldb.stop()
 

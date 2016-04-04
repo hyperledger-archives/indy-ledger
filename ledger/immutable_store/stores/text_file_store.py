@@ -1,13 +1,14 @@
 import os
 
-from ledger.immutable_store.file_store import FileStore
+from ledger.immutable_store.stores.file_store import FileStore
 
 
 class TextFileStore(FileStore):
-    def __init__(self, dbDir, dbName):
+    def __init__(self, dbDir, dbName, keyIsLineNo: bool=False):
         # This is the separator between key and value
         self.delimiter = "\t"
         self.lineSep = os.linesep
+        self.keyIsLineNo = keyIsLineNo
         self._initDB(dbDir, dbName)
 
     def _initDB(self, dbDir, dbName):

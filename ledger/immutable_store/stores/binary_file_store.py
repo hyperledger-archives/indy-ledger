@@ -1,20 +1,21 @@
 import os
 
-from ledger.immutable_store.file_store import FileStore
+from ledger.immutable_store.stores.file_store import FileStore
 
 
 class BinaryFileStore(FileStore):
-    def __init__(self, dbDir, dbName):
+    def __init__(self, dbDir, dbName, keyIsLineNo: bool=False):
         # This is the separator between key and value
         self.delimiter = b"\t"
         # TODO: This line separator might conflict with some data format.
         # So prefix the value data in the file with size and only read those
         # number of bytes.
         self.lineSep = b'\n\x07\n\x01'
+        self.keyIsLineNo = keyIsLineNo
         self._initDB(dbDir, dbName)
 
     def _isBytes(self, arg):
-        return isinstance(arg, bytes) or isinstance(arg, bytearray)
+        return isinstance(arg, (bytes, bytearray))
 
     def _initDB(self, dbDir, dbName):
         super()._initDB(dbDir, dbName)

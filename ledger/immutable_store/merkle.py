@@ -19,7 +19,7 @@ Benchmark sample code:
 >>> print timeav("hasher.hash_full_tree(leaves)")
 1.50476324558
 """
-
+import base64
 import hashlib
 import logging
 from base64 import b64encode
@@ -133,6 +133,7 @@ class CompactMerkleTree(MerkleTree):
     def __init__(self, hasher=TreeHasher(), tree_size=0, hashes=()):
         self.__hasher = hasher
         self._update(tree_size, hashes)
+        self.entries = []
 
     def _update(self, tree_size, hashes):
         bits_set = count_bits_set(tree_size)
@@ -242,6 +243,7 @@ class CompactMerkleTree(MerkleTree):
     def append(self, new_leaf):
         """Append a new leaf onto the end of this tree."""
         self._push_subtree([new_leaf])
+        self.entries.append(new_leaf)
 
     def extend(self, new_leaves):
         """Extend this tree with new_leaves on the end.
@@ -273,6 +275,34 @@ class CompactMerkleTree(MerkleTree):
         new_tree = self.__copy__()
         new_tree.extend(new_leaves)
         return new_tree
+
+    def auditPath(self, m, start_n, end_n):
+        n = end_n - start_n
+        if n == 1:
+            return []
+        else:
+            k = 1 << (len(bin(n - 1)) - 3)
+            if m < k:
+                return self.auditPath(m, start_n, start_n + k) + \
+                       [(start_n + k, end_n)]
+            else:
+                return self.auditPath(m - k, start_n + k, end_n) + \
+                       [(start_n, start_n + k)]
+
+    def inclusion_proof(self, m, n):
+        return [base64.b64encode(self._calc_mth(a, b)) for a, b in
+                self.auditPath(m, 0, n)]
+
+    def _calc_mth(self, start, end):
+        stack = []
+        tree_size = end - start
+        for idx, leaf in enumerate(self.entries[start:end]):
+            stack.append(hashlib.sha256(b"\x00" + leaf).digest())
+            for _ in range(bin(idx).replace('b', '')[::-1].index(
+                    '0') if idx + 1 < tree_size else len(stack) - 1):
+                stack[-2:] = [
+                    hashlib.sha256(b"\x01" + stack[-2] + stack[-1]).digest()]
+        return stack[0]
 
 
 class MerkleVerifier(object):

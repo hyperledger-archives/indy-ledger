@@ -11,7 +11,9 @@ class F(Enum):
     created = 6
     added_to_tree = 7
     audit_info = 8
-    seq_no = 9
+    serial_no = 9
+    tree_size = 10
+    root_hash = 11
 
 
 class ImmutableStore:

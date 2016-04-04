@@ -2,7 +2,8 @@ from binascii import hexlify
 
 import pytest
 
-from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher
+from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher, \
+    MerkleVerifier
 
 
 @pytest.fixture()
@@ -111,10 +112,13 @@ hexlify(c(
 
 def testStuff(hasherAndTree):
     h, m, show = hasherAndTree
+    verifier = MerkleVerifier()
 
     for d in range(10000):
         data = str(d+1).encode()
         m.append(data)
+        audit_path_length = verifier.audit_path_length(d, d+1)
+        audit_info = m.inclusion_proof(d, d+1)
         if d % 100 == 0:
             show(data)
 
