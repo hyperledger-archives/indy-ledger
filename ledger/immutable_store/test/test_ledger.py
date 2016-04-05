@@ -17,11 +17,15 @@ hasher = TreeHasher()
 
 
 def b64e(s):
-    return '"{}"'.format(base64.b64encode(s).decode("utf-8"))
+    return base64.b64encode(s).decode("utf-8")
 
 
 def b64d(s):
     return base64.b64decode(s)
+
+
+def lst2str(l):
+    return ",".join(l)
 
 
 orderedFields = OrderedDict([
@@ -33,7 +37,7 @@ orderedFields = OrderedDict([
     ("leaf_data.op", (str, str)),
     ("leaf_data.reference", (str, str)),
     ("leaf_data_hash", (b64e, b64d)),
-    ("audit_info", (str, list))
+    ("audit_info", (lst2str, str.split))
 ])
 
 ledgerSerializer = CompactSerializer(orderedFields)

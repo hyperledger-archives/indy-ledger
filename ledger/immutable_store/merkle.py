@@ -290,8 +290,8 @@ class CompactMerkleTree(MerkleTree):
                        [(start_n, start_n + k)]
 
     def inclusion_proof(self, m, n):
-        return [base64.b64encode(self._calc_mth(a, b)) for a, b in
-                self.auditPath(m, 0, n)]
+        return [base64.b64encode(self._calc_mth(a, b)).decode("utf-8")
+                for a, b in self.auditPath(m, 0, n)]
 
     def _calc_mth(self, start, end):
         stack = []
