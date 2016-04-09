@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-setup(name='Ledger',
+setup(name='Ledger-dev',
       version='0.0.2',
       description='Immutable Ledger python library',
       url='https://github.com/evernym/ledger-priv',
