@@ -3,17 +3,17 @@ from enum import Enum
 
 
 class F(Enum):
-    client_id = 1
-    request_id = 2
+    clientId = 1
+    requestId = 2
     STH = 3
-    leaf_data = 4
-    leaf_data_hash = 5
+    leafData = 4
+    leafDataHash = 5
     created = 6
-    added_to_tree = 7
-    audit_info = 8
-    serial_no = 9
-    tree_size = 10
-    root_hash = 11
+    addedToTree = 7
+    auditInfo = 8
+    serialNo = 9
+    treeSize = 10
+    rootHash = 11
 
 
 class ImmutableStore:

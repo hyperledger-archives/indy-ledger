@@ -4,7 +4,7 @@ from hashlib import sha256
 
 class FileStore:
     def __init__(self, dbDir, dbName, keyIsLineNo: bool=False):
-        raise NotImplementedError
+        pass
 
     def _prepareDBLocation(self, dbDir, dbName):
         self.dbDir = dbDir

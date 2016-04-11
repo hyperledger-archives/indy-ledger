@@ -13,7 +13,7 @@ class TextFileStore(FileStore):
 
     def _initDB(self, dbDir, dbName):
         super()._initDB(dbDir, dbName)
-        self.dbPath = os.path.join(dbDir, "{}.txt".format(dbName))
+        self.dbPath = os.path.join(dbDir, dbName)
         self._dbFile = open(self.dbPath, mode="a+")
 
     def _getLines(self):
