@@ -1,7 +1,6 @@
 import logging
 from collections import namedtuple
 
-from ledger.immutable_store.error import GeneralMissingError
 from ledger.immutable_store.merkle import TreeHasher
 from ledger.immutable_store.merkle_tree import MerkleTree
 from ledger.immutable_store.store import ImmutableStore, F
@@ -13,7 +12,7 @@ Reply = namedtuple('Reply', ['viewNo', 'reqId', 'result'])
 
 
 class Ledger(ImmutableStore):
-    def __init__(self, tree: MerkleTree, dataDir: str, serializer=None):
+    def __init__(self, tree: MerkleTree, dataDir: str, serializer=None, fileName=None):
         """
         :param tree: an implementation of MerkleTree used to store events
         """
@@ -25,6 +24,7 @@ class Ledger(ImmutableStore):
         self.leafDataSerializer = JsonSerializer()
         self.hasher = TreeHasher()
         self._transactionLog = None
+        self._transactionLogName = fileName or "transactions"
         # self._processedReq = None
         self.start()
         self.serialNo = self.lastCount() - 1
@@ -134,7 +134,9 @@ class Ledger(ImmutableStore):
             logging.debug("Ledger already started.")
         else:
             logging.debug("Starting ledger...")
-            self._transactionLog = TextFileStore(self.dataDir, "transactions", keyIsLineNo=True)
+            self._transactionLog = TextFileStore(self.dataDir,
+                                                 self._transactionLogName,
+                                                 keyIsLineNo=True)
             # self._processedReq = TextFileStore(self.dataDir, "processedReq")
 
     def stop(self):
@@ -147,6 +149,6 @@ class Ledger(ImmutableStore):
 
     def getAllTxn(self):
         result = {}
-        for txnId, txn in self._transactionLog.iterator():
-            result[txnId] = self.nodeSerializer.deserialize(txn)
+        for serailNo, txn in self._transactionLog.iterator():
+            result[serailNo] = self.nodeSerializer.deserialize(txn)
         return result
