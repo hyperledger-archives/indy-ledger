@@ -41,9 +41,7 @@ class Ledger(ImmutableStore):
         return addedData
 
     def _addToTree(self, data):
-        leaf_data_hash = self.hasher.hash_leaf(
-            self.leafDataSerializer.serialize(data))
-        self.tree.append(leaf_data_hash)
+        self.tree.append(self.leafDataSerializer.serialize(data))
         self.serialNo += 1
         return {
             F.serialNo.name: self.serialNo,
