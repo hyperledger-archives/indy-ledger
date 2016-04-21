@@ -48,6 +48,10 @@ class MerkleTree:
         pass
 
     @abstractmethod
+    def root_hash(self):
+        pass
+
+    @abstractmethod
     def root_hash_hex(self):
         pass
 

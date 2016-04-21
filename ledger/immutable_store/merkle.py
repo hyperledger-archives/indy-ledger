@@ -44,7 +44,7 @@ def count_bits_set(i):
 def lowest_bit_set(i):
     # from https://wiki.python.org/moin/BitManipulation
     # but with 1-based indexing like in ffs(3) POSIX
-    return highest_bit_set(i & -i)
+    return highest_bit_set(i & -i)  
 
 
 def highest_bit_set(i):
@@ -282,9 +282,10 @@ class CompactMerkleTree(MerkleTree):
             return [(subtree_h, next_hash)] + self.__push_subtree_hash(subtree_h + 1, next_hash)
 
     def append(self, new_leaf):
-        """Append a new leaf onto the end of this tree."""
+        """Append a new leaf onto the end of this tree and return the audit path"""
+        auditPath = list(reversed(self.__hashes))
         self._push_subtree([new_leaf])
-        # self.entries.append(new_leaf)
+        return auditPath
 
     def extend(self, new_leaves):
         """Extend this tree with new_leaves on the end.
@@ -317,6 +318,12 @@ class CompactMerkleTree(MerkleTree):
         new_tree.extend(new_leaves)
         return new_tree
 
+
+class FullMerkleTree(CompactMerkleTree):
+    def __init__(self, hasher=TreeHasher(), tree_size=0, hashes=()):
+        super().__init__(hasher=hasher, tree_size=tree_size, hashes=hashes)
+        self.entries = []
+
     def auditPath(self, m, start_n, end_n):
         n = end_n - start_n
         if n == 1:
@@ -329,6 +336,10 @@ class CompactMerkleTree(MerkleTree):
             else:
                 return self.auditPath(m - k, start_n + k, end_n) + \
                        [(start_n, start_n + k)]
+
+    def append(self, new_leaf):
+        super().append(new_leaf)
+        self.entries.append(new_leaf)
 
     def inclusion_proof(self, m, n):
         return [base64.b64encode(self._calc_mth(a, b)).decode("utf-8")

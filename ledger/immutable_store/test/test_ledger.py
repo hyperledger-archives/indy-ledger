@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 import time
 
+import pytest
 
 from ledger.immutable_store.ledger import Ledger
 from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher
@@ -44,6 +45,7 @@ ledgerSerializer = CompactSerializer(orderedFields)
 leafSerializer = JsonSerializer()
 
 
+@pytest.mark.skipif(True, "Obsolete")
 def testAddTxn():
 
     ledger = Ledger(CompactMerkleTree(), dataDir=levelDBDir, serializer=ledgerSerializer)

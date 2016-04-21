@@ -17,9 +17,6 @@ class OrderedJsonEncoder(json.JSONEncoder):
     def encode(self, o):
         if isinstance(o, (bytes, bytearray)):
             return '"{}"'.format(base64.b64encode(o).decode("utf-8"))
-        # elif isinstance(o, dict):
-        #     return "{" + ",".join([self.encode(k)+":"+self.encode(v)
-        #                            for (k, v) in o.items()]) + "}"
         else:
             return json.JSONEncoder.encode(self, o)
 

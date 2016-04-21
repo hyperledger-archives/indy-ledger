@@ -1,3 +1,4 @@
+import base64
 import logging
 from collections import namedtuple
 
@@ -41,30 +42,13 @@ class Ledger(ImmutableStore):
         return addedData
 
     def _addToTree(self, data):
-        self.tree.append(self.leafDataSerializer.serialize(data))
+        auditPath = self.tree.append(self.leafDataSerializer.serialize(data))
         self.serialNo += 1
         return {
             F.serialNo.name: self.serialNo,
-            F.rootHash.name: self.tree.root_hash_hex().decode("utf-8"),
-            F.auditPath.name: self.tree.inclusion_proof(self.serialNo,
-                                                        self.tree.tree_size)
+            F.rootHash.name: base64.b64encode(self.tree.root_hash()).decode(),
+            F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
         }
-
-        # leaf_data_hash = data[F.leaf_data_hash.name]
-        # leaf_data = data[F.leaf_data.name]
-        # if leaf_data_hash:
-        #     if isinstance(leaf_data_hash, str):
-        #         leaf_data_hash = leaf_data_hash.encode()
-        #     self.tree.append(leaf_data_hash)
-        # elif leaf_data:
-        #     leaf_data_hash = self.hasher.hash_leaf(
-        #         self.leafDataSerializer.serialize(leaf_data))
-        #     self.tree.append(leaf_data_hash)
-        # else:
-        #     raise GeneralMissingError("Transaction not found.")
-        # data[F.audit_info.name] = self.tree.inclusion_proof(self.serialNo,
-        #                                                self.tree.tree_size)
-        # return data
 
     def _addToStore(self, data):
         key = str(self.serialNo)
@@ -72,15 +56,6 @@ class Ledger(ImmutableStore):
             data, toBytes=False))
 
     async def append(self, identifier: str, reply, txnId: str):
-        # self.serialNo += 1
-        # data = {
-        #     F.serial_no.name: self.serialNo,
-        #     F.STH.name: self.getSTH(),
-        #     F.leaf_data.name: reply.result,
-        #     F.leaf_data_hash.name: self.hasher.hash_leaf(
-        #         self.leafDataSerializer.serialize(reply.result))
-        # }
-        # self.add(data)
         merkleInfo = self.add(reply.result)
         self.insertProcessedReq(identifier, reply.reqId, self.serialNo)
         return merkleInfo
@@ -116,12 +91,6 @@ class Ledger(ImmutableStore):
     def lastCount(self):
         key = self._transactionLog.lastKey
         return 0 if key is None else int(key)
-
-    def getSTH(self):
-        return {
-            F.treeSize.name: self.size,
-            F.rootHash.name: self.tree.root_hash_hex().decode("utf-8")
-        }
 
     @property
     def size(self) -> int:
