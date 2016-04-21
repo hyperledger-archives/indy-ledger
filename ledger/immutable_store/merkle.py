@@ -2,7 +2,7 @@
 
 Benchmark sample code:
 
->>> from immutable_store import merkle import os
+>>> from ledger import merkle import os
 >>> import timeit# generate a few blobs approx the size of a typical cert, takes a few seconds
 >>> leaves = [os.urandom(2048) for i in xrange(65536)]
 >>> hasher = merkle.TreeHasher()

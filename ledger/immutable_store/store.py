@@ -5,15 +5,14 @@ from enum import Enum
 class F(Enum):
     clientId = 1
     requestId = 2
-    STH = 3
+    rootHash = 3
     leafData = 4
     leafDataHash = 5
     created = 6
     addedToTree = 7
-    auditInfo = 8
+    auditPath = 8
     serialNo = 9
     treeSize = 10
-    rootHash = 11
 
 
 class ImmutableStore:
