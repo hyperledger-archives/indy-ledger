@@ -42,7 +42,8 @@ class Ledger(ImmutableStore):
         return addedData
 
     def _addToTree(self, data):
-        auditPath = self.tree.append(self.leafDataSerializer.serialize(data))
+        leaf_data = self.leafDataSerializer.serialize(data)
+        auditPath = self.tree.append(leaf_data)
         self.serialNo += 1
         return {
             F.serialNo.name: self.serialNo,
