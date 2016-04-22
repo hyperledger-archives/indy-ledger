@@ -24,6 +24,8 @@ import hashlib
 import logging
 from base64 import b64encode
 from binascii import hexlify
+from collections import deque
+from pprint import pprint
 
 from ledger.immutable_store import error
 from ledger.immutable_store.merkle_tree import MerkleTree
@@ -37,15 +39,22 @@ def count_bits_set(i):
         count += 1
     return count
 
+
 def lowest_bit_set(i):
     # from https://wiki.python.org/moin/BitManipulation
     # but with 1-based indexing like in ffs(3) POSIX
-    low = i & -i
-    lowBit = 0
-    while low:
-        low >>= 1
-        lowBit += 1
-    return lowBit
+    return highest_bit_set(i & -i)
+
+
+def highest_bit_set(i):
+    # from https://wiki.python.org/moin/BitManipulation
+    # but with 1-based indexing like in ffs(3) POSIX
+    hi = i
+    hiBit = 0
+    while hi:
+        hi >>= 1
+        hiBit += 1
+    return hiBit
 
 
 class TreeHasher(object):
@@ -131,9 +140,14 @@ class CompactMerkleTree(MerkleTree):
     """
 
     def __init__(self, hasher=TreeHasher(), tree_size=0, hashes=()):
+
+        # These two queues should be written to two simple position-accessible
+        # arrays (files, database tables, etc.)
+        self.leaf_hash_deque = deque()
+        self.node_hash_deque = deque()
+
         self.__hasher = hasher
         self._update(tree_size, hashes)
-        self.entries = []
 
     def _update(self, tree_size, hashes):
         bits_set = count_bits_set(tree_size)
@@ -224,12 +238,19 @@ class CompactMerkleTree(MerkleTree):
                 subtree_h, mintree_h))
         root_hash, hashes = self.__hasher._hash_full(leaves, 0, size)
         assert hashes == (root_hash,)
-        self.__push_subtree_hash(subtree_h, root_hash)
+
+        self.leaf_hash_deque.extendleft(hashes)
+
+        new_node_hashes = self.__push_subtree_hash(subtree_h, root_hash)
+
+        self.node_hash_deque.extendleft((self.tree_size, size, hash)
+                                        for size, hash in new_node_hashes)
 
     def __push_subtree_hash(self, subtree_h, sub_hash):
         size, mintree_h = 1 << (subtree_h - 1), self.__mintree_height
         if subtree_h < mintree_h or mintree_h == 0:
             self._update(self.tree_size + size, self.hashes + (sub_hash,))
+            return []
         else:
             assert subtree_h == mintree_h
             # addition carry - rewind the tree and re-try with bigger subtree
@@ -238,12 +259,13 @@ class CompactMerkleTree(MerkleTree):
             new_mintree_h = self.__mintree_height
             assert mintree_h < new_mintree_h or new_mintree_h == 0
             next_hash = self.__hasher.hash_children(prev_hash, sub_hash)
-            self.__push_subtree_hash(subtree_h + 1, next_hash)
+
+            return [(subtree_h, next_hash)] + self.__push_subtree_hash(subtree_h + 1, next_hash)
 
     def append(self, new_leaf):
         """Append a new leaf onto the end of this tree."""
         self._push_subtree([new_leaf])
-        self.entries.append(new_leaf)
+        # self.entries.append(new_leaf)
 
     def extend(self, new_leaves):
         """Extend this tree with new_leaves on the end.

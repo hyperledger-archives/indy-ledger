@@ -1,9 +1,11 @@
 from binascii import hexlify
+from string import ascii_lowercase
 
 import pytest
+from math import log
 
 from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher, \
-    MerkleVerifier
+    MerkleVerifier, count_bits_set, highest_bit_set
 
 
 @pytest.fixture()
@@ -87,6 +89,17 @@ def hasherAndTree():
 221   fa6   906   11e  533   3bf
 
 
+8: 50f
+
+                    [50f]
+            /                \
+         4c4                 fed
+     /         \            /    \
+   e8b         9c7        2b1     800
+  /   \       /   \      /   \    /  \
+221   fa6   906   11e  533   3bf 797 754
+
+
 
 """
 
@@ -118,9 +131,13 @@ def testStuff(hasherAndTree):
         data = str(d+1).encode()
         m.append(data)
         audit_path_length = verifier.audit_path_length(d, d+1)
-        audit_info = m.inclusion_proof(d, d+1)
+        incl_proof = m.inclusion_proof(d, d+1)  # size before and size after
         if d % 100 == 0:
             show(data)
+            print("aud path l: {}".format(audit_path_length))
+            print("incl proof: {}".format(incl_proof))
+            print("incl p len: {}".format(len(incl_proof)))
+
 
     # m.append(b'a')
     #
@@ -140,3 +157,42 @@ def testStuff(hasherAndTree):
     # o = O()
     # m.save(o)
     # print(o)
+
+
+def getNodePosition(start, height):
+    pwr = highest_bit_set(start) - 1
+    if count_bits_set(start) == 1:
+        adj = height - pwr
+        return start - 1 + adj
+    else:
+        c = pow(2, pwr)
+        return getNodePosition(c, pwr) + getNodePosition(start - c, height)
+
+
+def testEfficientHashStore(hasherAndTree):
+    h, m, show = hasherAndTree
+
+    txns = 1000
+
+    for d in range(txns):
+        serNo = d+1
+        data = str(serNo).encode()
+        show(data)
+        m.append(data)
+
+    assert len(m.leaf_hash_deque) == txns
+    while m.leaf_hash_deque:
+        leaf = m.leaf_hash_deque.pop()
+        print("leaf hash: {}".format(hexlify(leaf)))
+
+    node_ptr = 0
+    while m.node_hash_deque:
+        start, height, node = m.node_hash_deque.pop()
+        node_ptr += 1
+        end = start - pow(2, height) + 1
+        print("node hash start-end: {}-{}".format(start, end))
+        print("node hash height: {}".format(height))
+        print("node hash end: {}".format(end))
+        print("node hash: {}".format(hexlify(node)))
+        assert getNodePosition(start, height) == node_ptr
+
