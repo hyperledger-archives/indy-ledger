@@ -1,4 +1,5 @@
-from binascii import hexlify
+from binascii import hexlify, unhexlify
+from copy import copy
 from pprint import pprint
 from string import ascii_lowercase
 
@@ -7,6 +8,7 @@ from math import log
 
 from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher, \
     MerkleVerifier, count_bits_set, highest_bit_set, HashStore
+from ledger.immutable_store.test.test_merkle_proof import STH
 
 
 @pytest.fixture()
@@ -263,7 +265,7 @@ def getPath(serNo, offset=0):
     pwr = highest_bit_set(serNo-1-offset) - 1
     if pwr <= 0:
         if serNo % 2 == 0:
-            return [serNo-1], []
+            return [serNo - 1], []
         else:
             return [], []
     c = pow(2, pwr) + offset
@@ -295,9 +297,25 @@ def testLocate(hasherAndTree, addTxns, storeHashes):
             hash = hexlify(node)
             print("node: {}".format(hash))
             calculatedAuditPath.append(hash)
+        print("{} -> leafs: {}, nodes: {}".format(pos, leafs, nodes))
         print("Audit path built using formula {}".format(calculatedAuditPath))
         print("Audit path received while appending leaf {}".format(auditPaths[d]))
+
+        # Testing equality of audit path calculated using formula and audit path
+        #  received while inserting leaf into the tree
         assert calculatedAuditPath == auditPaths[d]
+        auditPathLength = verifier.audit_path_length(d, d+1)
+        assert auditPathLength == len(calculatedAuditPath)
 
-        print("{} -> leafs: {}, nodes: {}".format(pos, leafs, nodes))
+        # Testing root hash generation
+        leafHash = storeHashes.getLeaf(d)
+        rootHashFrmCalc = verifier._calculate_root_hash_from_audit_path(leafHash, d, copy(calculatedAuditPath), d+1)
+        rootHash = verifier._calculate_root_hash_from_audit_path(leafHash, d, copy(auditPaths[d]), d + 1)
+        assert rootHash == rootHashFrmCalc
 
+        # Testing verification, do not need `assert` since
+        # `verify_leaf_hash_inclusion` will throw an exeception
+        sthFrmCalc = STH(d + 1, rootHashFrmCalc)
+        verifier.verify_leaf_hash_inclusion(leafHash, d, calculatedAuditPath, sthFrmCalc)
+        sth = STH(d + 1, rootHash)
+        verifier.verify_leaf_hash_inclusion(leafHash, d, auditPaths[d], sth)
