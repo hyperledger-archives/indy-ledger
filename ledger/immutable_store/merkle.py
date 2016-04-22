@@ -279,7 +279,8 @@ class CompactMerkleTree(MerkleTree):
             assert mintree_h < new_mintree_h or new_mintree_h == 0
             next_hash = self.__hasher.hash_children(prev_hash, sub_hash)
 
-            return [(subtree_h, next_hash)] + self.__push_subtree_hash(subtree_h + 1, next_hash)
+            return [(subtree_h, next_hash)] + self.__push_subtree_hash(
+                subtree_h + 1, next_hash)
 
     def append(self, new_leaf):
         """Append a new leaf onto the end of this tree and return the audit path"""

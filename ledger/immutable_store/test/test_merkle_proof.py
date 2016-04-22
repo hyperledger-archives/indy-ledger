@@ -6,7 +6,7 @@ import pytest
 import time
 
 from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher, \
-    MerkleVerifier, FullMerkleTree
+    MerkleVerifier, FullMerkleTree, count_bits_set, highest_bit_set
 
 
 STH = namedtuple("STH", ["tree_size", "sha256_root_hash"])
@@ -104,6 +104,16 @@ def show(h, m, data):
 221   fa6   906   11e  533   3bf
 
 
+8: 50f
+                    [50f]
+            /                \
+         4c4                 fed
+     /         \            /    \
+   e8b         9c7        2b1     800
+  /   \       /   \      /   \    /  \
+221   fa6   906   11e  533   3bf 797 754
+
+
 """
 
 """
@@ -185,3 +195,41 @@ def testCompactMerkleTree(hasherAndCompactMerkleTree):
             print("calculated root hash is {}".format(hexlify(calculated_root_hash)))
             sth = STH(d+1, m.root_hash())
             verifier.verify_leaf_inclusion(data, d, auditPath, sth)
+
+
+def getNodePosition(start, height):
+    pwr = highest_bit_set(start) - 1
+    if count_bits_set(start) == 1:
+        adj = height - pwr
+        return start - 1 + adj
+    else:
+        c = pow(2, pwr)
+        return getNodePosition(c, pwr) + getNodePosition(start - c, height)
+
+
+def testEfficientHashStore(hasherAndCompactMerkleTree):
+    h, m = hasherAndCompactMerkleTree
+
+    txns = 1000
+
+    for d in range(txns):
+        serNo = d+1
+        data = str(serNo).encode()
+        show(h, m, data)
+        m.append(data)
+
+    assert len(m.leaf_hash_deque) == txns
+    while m.leaf_hash_deque:
+        leaf = m.leaf_hash_deque.pop()
+        print("leaf hash: {}".format(hexlify(leaf)))
+
+    node_ptr = 0
+    while m.node_hash_deque:
+        start, height, node = m.node_hash_deque.pop()
+        node_ptr += 1
+        end = start - pow(2, height) + 1
+        print("node hash start-end: {}-{}".format(start, end))
+        print("node hash height: {}".format(height))
+        print("node hash end: {}".format(end))
+        print("node hash: {}".format(hexlify(node)))
+        assert getNodePosition(start, height) == node_ptr
