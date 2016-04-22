@@ -64,7 +64,7 @@ class Ledger(ImmutableStore):
     async def get(self, identifier: str, reqId: int):
         serialNo = self.getProcessedReq(identifier, reqId)
         if serialNo:
-            return self.getBySerialNo(serialNo)[F.leafData.name]
+            return self.getBySerialNo(serialNo)
         else:
             return None
 

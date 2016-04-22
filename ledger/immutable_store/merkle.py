@@ -44,7 +44,7 @@ def count_bits_set(i):
 def lowest_bit_set(i):
     # from https://wiki.python.org/moin/BitManipulation
     # but with 1-based indexing like in ffs(3) POSIX
-    return highest_bit_set(i & -i)  
+    return highest_bit_set(i & -i)
 
 
 def highest_bit_set(i):
