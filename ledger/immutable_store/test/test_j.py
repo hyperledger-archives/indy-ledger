@@ -1,4 +1,5 @@
 from binascii import hexlify
+from pprint import pprint
 from string import ascii_lowercase
 
 import pytest
@@ -159,8 +160,9 @@ def testStuff(hasherAndTree):
     # print(o)
 
 
-def getNodePosition(start, height):
+def getNodePosition(start, height=None):
     pwr = highest_bit_set(start) - 1
+    height = height or pwr
     if count_bits_set(start) == 1:
         adj = height - pwr
         return start - 1 + adj
@@ -169,18 +171,24 @@ def getNodePosition(start, height):
         return getNodePosition(c, pwr) + getNodePosition(start - c, height)
 
 
-def testEfficientHashStore(hasherAndTree):
+@pytest.fixture()
+def addTxns(hasherAndTree):
     h, m, show = hasherAndTree
 
-    txns = 1000
+    txn_count = 1000
 
-    for d in range(txns):
+    for d in range(txn_count):
         serNo = d+1
         data = str(serNo).encode()
-        show(data)
         m.append(data)
 
-    assert len(m.leaf_hash_deque) == txns
+    return txn_count
+
+
+def testEfficientHashStore(hasherAndTree, addTxns):
+    h, m, show = hasherAndTree
+
+    assert len(m.leaf_hash_deque) == addTxns
     while m.leaf_hash_deque:
         leaf = m.leaf_hash_deque.pop()
         print("leaf hash: {}".format(hexlify(leaf)))
@@ -195,4 +203,44 @@ def testEfficientHashStore(hasherAndTree):
         print("node hash end: {}".format(end))
         print("node hash: {}".format(hexlify(node)))
         assert getNodePosition(start, height) == node_ptr
+
+'''
+14
+pwr = 3
+c = 8
+
+14,8
+pwr = 2
+c = 4 + 8 = 12
+
+12,2
+
+14, 12
+pwr = 1
+c = 2 + 12 = 14
+
+14,1
+'''
+
+
+def getPath(serNo, offset=0):
+    pwr = highest_bit_set(serNo-1-offset) - 1
+    if pwr <= 0:
+        if serNo % 2 == 0:
+            return [serNo, serNo-1], []
+        else:
+            return [serNo], []
+    c = pow(2, pwr) + offset
+    leafs, nodes = getPath(serNo, c)
+    nodes.append(getNodePosition(c, pwr))
+    return leafs, nodes
+
+
+def testLocate(hasherAndTree, addTxns):
+    h, m, show = hasherAndTree
+
+    print()
+    for d in range(50):
+        pos = d+1
+        print("{} -> leafs: {}, nodes: {}".format(pos, *getPath(pos)))
 
