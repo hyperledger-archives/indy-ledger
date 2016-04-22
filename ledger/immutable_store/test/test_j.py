@@ -177,12 +177,13 @@ def addTxns(hasherAndTree):
 
     txn_count = 1000
 
+    auditPaths = []
     for d in range(txn_count):
         serNo = d+1
         data = str(serNo).encode()
-        m.append(data)
+        auditPaths.append([hexlify(h) for h in m.append(data)])
 
-    return txn_count
+    return txn_count, auditPaths
 
 
 class MemoryHashStore(HashStore):
@@ -221,8 +222,8 @@ def testEfficientHashStore(hasherAndTree, addTxns, storeHashes):
     h, m, show = hasherAndTree
 
     mhs = storeHashes
-
-    assert len(mhs.leafs) == addTxns
+    txnCount, auditPaths = addTxns
+    assert len(mhs.leafs) == txnCount
 
     for leaf in mhs.leafs:
         print("leaf hash: {}".format(hexlify(leaf)))
@@ -274,6 +275,7 @@ def testLocate(hasherAndTree, addTxns, storeHashes):
     h, m, show = hasherAndTree
 
     mhs = storeHashes
+    txnCount, auditPaths = addTxns
 
     verifier = MerkleVerifier()
 
@@ -282,12 +284,19 @@ def testLocate(hasherAndTree, addTxns, storeHashes):
         pos = d+1
         print("Audit Path for Serial No: {}".format(pos))
         leafs, nodes = getPath(pos)
-        for leaf_pos in leafs:
+        calculatedAuditPath = []
+        for i, leaf_pos in enumerate(leafs):
             hash = hexlify(mhs.getLeaf(leaf_pos))
             print("leaf: {}".format(hash))
+            if i > 0:
+                calculatedAuditPath.append(hash)
         for node_pos in nodes:
-            hash = hexlify(mhs.getLeaf(node_pos))
+            hash = hexlify(mhs.getNode(node_pos)[2])
             print("node: {}".format(hash))
+            calculatedAuditPath.append(hash)
+        print("Audit path built using formula {}".format(calculatedAuditPath))
+        print("Audit path received while appending leaf {}".format(auditPaths[d]))
+        assert calculatedAuditPath == auditPaths[d]
 
         #
         # print("{} -> leafs: {}, nodes: {}".format(pos, leafs, nodes))
