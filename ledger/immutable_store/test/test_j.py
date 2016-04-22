@@ -6,7 +6,7 @@ import pytest
 from math import log
 
 from ledger.immutable_store.merkle import CompactMerkleTree, TreeHasher, \
-    MerkleVerifier, count_bits_set, highest_bit_set
+    MerkleVerifier, count_bits_set, highest_bit_set, HashStore
 
 
 @pytest.fixture()
@@ -185,23 +185,57 @@ def addTxns(hasherAndTree):
     return txn_count
 
 
-def testEfficientHashStore(hasherAndTree, addTxns):
+class MemoryHashStore(HashStore):
+    def __init__(self):
+        self.nodes = []
+        self.leafs = []
+
+    def writeLeaf(self, leaf):
+        self.leafs.append(leaf)
+
+    def writeNode(self, node):
+        self.nodes.append(node)
+
+    def getLeaf(self, pos):
+        return self.leafs[pos-1]
+
+    def getNode(self, pos):
+        return self.nodes[pos-1]
+
+
+@pytest.fixture()
+def storeHashes(hasherAndTree, addTxns):
     h, m, show = hasherAndTree
 
-    assert len(m.leaf_hash_deque) == addTxns
+    mhs = MemoryHashStore()
+
     while m.leaf_hash_deque:
-        leaf = m.leaf_hash_deque.pop()
+        mhs.writeLeaf(m.leaf_hash_deque.pop())
+
+    while m.node_hash_deque:
+        mhs.writeNode(m.node_hash_deque.pop())
+
+    return mhs
+
+def testEfficientHashStore(hasherAndTree, addTxns, storeHashes):
+    h, m, show = hasherAndTree
+
+    mhs = storeHashes
+
+    assert len(mhs.leafs) == addTxns
+
+    for leaf in mhs.leafs:
         print("leaf hash: {}".format(hexlify(leaf)))
 
     node_ptr = 0
-    while m.node_hash_deque:
-        start, height, node = m.node_hash_deque.pop()
+    for n in mhs.nodes:
+        start, height, node_hash = n
         node_ptr += 1
         end = start - pow(2, height) + 1
         print("node hash start-end: {}-{}".format(start, end))
         print("node hash height: {}".format(height))
         print("node hash end: {}".format(end))
-        print("node hash: {}".format(hexlify(node)))
+        print("node hash: {}".format(hexlify(node_hash)))
         assert getNodePosition(start, height) == node_ptr
 
 '''
@@ -236,11 +270,25 @@ def getPath(serNo, offset=0):
     return leafs, nodes
 
 
-def testLocate(hasherAndTree, addTxns):
+def testLocate(hasherAndTree, addTxns, storeHashes):
     h, m, show = hasherAndTree
 
-    print()
+    mhs = storeHashes
+
+    verifier = MerkleVerifier()
+
     for d in range(50):
+        print()
         pos = d+1
-        print("{} -> leafs: {}, nodes: {}".format(pos, *getPath(pos)))
+        print("Audit Path for Serial No: {}".format(pos))
+        leafs, nodes = getPath(pos)
+        for leaf_pos in leafs:
+            hash = hexlify(mhs.getLeaf(leaf_pos))
+            print("leaf: {}".format(hash))
+        for node_pos in nodes:
+            hash = hexlify(mhs.getLeaf(node_pos))
+            print("node: {}".format(hash))
+
+        #
+        # print("{} -> leafs: {}, nodes: {}".format(pos, leafs, nodes))
 

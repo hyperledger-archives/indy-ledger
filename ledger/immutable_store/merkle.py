@@ -22,6 +22,7 @@ Benchmark sample code:
 import base64
 import hashlib
 import logging
+from abc import abstractmethod
 from base64 import b64encode
 from binascii import hexlify
 from collections import deque
@@ -128,6 +129,24 @@ class TreeHasher(object):
         for cur in rev_hashes:
             accum = self.hash_children(cur, accum)
         return accum
+
+
+class HashStore:
+    @abstractmethod
+    def writeLeaf(self, leaf):
+        pass
+
+    @abstractmethod
+    def writeNode(self, node):
+        pass
+
+    @abstractmethod
+    def getLeaf(self, pos):
+        pass
+
+    @abstractmethod
+    def getNode(self, pos):
+        pass
 
 
 class CompactMerkleTree(MerkleTree):
