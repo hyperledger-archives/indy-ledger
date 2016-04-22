@@ -4,14 +4,14 @@ from ledger.immutable_store.stores.file_store import FileStore
 
 
 class BinaryFileStore(FileStore):
-    def __init__(self, dbDir, dbName, keyIsLineNo: bool=False):
+    def __init__(self, dbDir, dbName, keyIsLineNo: bool=False, storeContentHash: bool=True):
         # This is the separator between key and value
         self.delimiter = b"\t"
         # TODO: This line separator might conflict with some data format.
         # So prefix the value data in the file with size and only read those
         # number of bytes.
         self.lineSep = b'\n\x07\n\x01'
-        self.keyIsLineNo = keyIsLineNo
+        super().__init__(dbDir, dbName, keyIsLineNo, storeContentHash)
         self._initDB(dbDir, dbName)
 
     def _isBytes(self, arg):
@@ -22,10 +22,10 @@ class BinaryFileStore(FileStore):
         self.dbPath = os.path.join(dbDir, "{}.bin".format(dbName))
         self._dbFile = open(self.dbPath, mode="a+b", buffering=0)
 
-    def put(self, key, value):
+    def put(self, value, key=None):
         if not (self._isBytes(key) or self._isBytes(value)):
             raise ValueError("key and value need to be bytes-like object")
-        super().put(key, value)
+        super().put(key=key, value=value)
 
     def get(self, key):
         if not self._isBytes(key):

@@ -19,14 +19,11 @@ Benchmark sample code:
 >>> print timeav("hasher.hash_full_tree(leaves)")
 1.50476324558
 """
-import base64
 import hashlib
 import logging
-from abc import abstractmethod
 from base64 import b64encode
 from binascii import hexlify
 from collections import deque
-from pprint import pprint
 
 from ledger.immutable_store import error
 from ledger.immutable_store.merkle_tree import MerkleTree
@@ -129,24 +126,6 @@ class TreeHasher(object):
         for cur in rev_hashes:
             accum = self.hash_children(cur, accum)
         return accum
-
-
-class HashStore:
-    @abstractmethod
-    def writeLeaf(self, leaf):
-        pass
-
-    @abstractmethod
-    def writeNode(self, node):
-        pass
-
-    @abstractmethod
-    def getLeaf(self, pos):
-        pass
-
-    @abstractmethod
-    def getNode(self, pos):
-        pass
 
 
 class CompactMerkleTree(MerkleTree):
@@ -318,44 +297,6 @@ class CompactMerkleTree(MerkleTree):
         new_tree = self.__copy__()
         new_tree.extend(new_leaves)
         return new_tree
-
-
-class FullMerkleTree(CompactMerkleTree):
-    def __init__(self, hasher=TreeHasher(), tree_size=0, hashes=()):
-        super().__init__(hasher=hasher, tree_size=tree_size, hashes=hashes)
-        self.entries = []
-
-    def auditPath(self, m, start_n, end_n):
-        n = end_n - start_n
-        if n == 1:
-            return []
-        else:
-            k = 1 << (len(bin(n - 1)) - 3)
-            if m < k:
-                return self.auditPath(m, start_n, start_n + k) + \
-                       [(start_n + k, end_n)]
-            else:
-                return self.auditPath(m - k, start_n + k, end_n) + \
-                       [(start_n, start_n + k)]
-
-    def append(self, new_leaf):
-        super().append(new_leaf)
-        self.entries.append(new_leaf)
-
-    def inclusion_proof(self, m, n):
-        return [base64.b64encode(self._calc_mth(a, b)).decode("utf-8")
-                for a, b in self.auditPath(m, 0, n)]
-
-    def _calc_mth(self, start, end):
-        stack = []
-        tree_size = end - start
-        for idx, leaf in enumerate(self.entries[start:end]):
-            stack.append(hashlib.sha256(b"\x00" + leaf).digest())
-            for _ in range(bin(idx).replace('b', '')[::-1].index(
-                    '0') if idx + 1 < tree_size else len(stack) - 1):
-                stack[-2:] = [
-                    hashlib.sha256(b"\x01" + stack[-2] + stack[-1]).digest()]
-        return stack[0]
 
 
 class MerkleVerifier(object):

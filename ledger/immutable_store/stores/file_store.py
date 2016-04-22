@@ -3,8 +3,9 @@ from hashlib import sha256
 
 
 class FileStore:
-    def __init__(self, dbDir, dbName, keyIsLineNo: bool=False):
-        pass
+    def __init__(self, dbDir, dbName, keyIsLineNo: bool=False, storeContentHash: bool=True):
+        self.keyIsLineNo = keyIsLineNo
+        self.storeContentHash = storeContentHash
 
     def _prepareDBLocation(self, dbDir, dbName):
         self.dbDir = dbDir
@@ -16,19 +17,22 @@ class FileStore:
         self._prepareDBLocation(dbDir, dbName)
 
     # noinspection PyUnresolvedReferences
-    def put(self, key, value):
+    def put(self, value, key=None):
         if not self.keyIsLineNo:
+            if key is None:
+                raise ValueError("Key must be provided for storing the value")
             self._dbFile.write(key)
             self._dbFile.write(self.delimiter)
         self._dbFile.write(value)
-        self._dbFile.write(self.delimiter)
         # TODO: Consider storing hash optional. The challenge is that then
         # during parsing it has to be checked whether hash is present or not.
         # That can be a trouble id the delimiter is also present inside the value
-        if isinstance(value, str):
-            value = value.encode()
-        hash = sha256(value).hexdigest()
-        self._dbFile.write(hash)
+        if self.storeContentHash:
+            self._dbFile.write(self.delimiter)
+            if isinstance(value, str):
+                value = value.encode()
+            hash = sha256(value).hexdigest()
+            self._dbFile.write(hash)
         self._dbFile.write(self.lineSep)
         self._dbFile.flush()
 
@@ -59,7 +63,10 @@ class FileStore:
                 i += 1
             else:
                 k, v = line.split(self.delimiter, 1)
-            value, hash = v.rsplit(self.delimiter, 1)
+            if self.storeContentHash:
+                value, hash = v.rsplit(self.delimiter, 1)
+            else:
+                value = v
             if not prefix or k.startswith(prefix):
                 yield value
 
@@ -73,7 +80,10 @@ class FileStore:
                 i += 1
             else:
                 k, v = line.split(self.delimiter, 1)
-            value, hash = v.rsplit(self.delimiter, 1)
+            if self.storeContentHash:
+                value, hash = v.rsplit(self.delimiter, 1)
+            else:
+                value = v
             if not prefix or k.startswith(prefix):
                 yield (k, value)
 

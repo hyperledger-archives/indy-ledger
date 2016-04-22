@@ -53,7 +53,7 @@ class Ledger(ImmutableStore):
 
     def _addToStore(self, data):
         key = str(self.serialNo)
-        self._transactionLog.put(key, self.nodeSerializer.serialize(
+        self._transactionLog.put(key=key, value=self.nodeSerializer.serialize(
             data, toBytes=False))
 
     async def append(self, identifier: str, reply, txnId: str):
@@ -79,7 +79,7 @@ class Ledger(ImmutableStore):
     def insertProcessedReq(self, identifier, reqId, serial_no):
         key = "{}-{}".format(identifier, reqId)
         value = str(serial_no)
-        self._processedReq.put(key, value)
+        self._processedReq.put(key=key, value=value)
 
     def getProcessedReq(self, identifier, reqId):
         key = "{}-{}".format(identifier, reqId)

@@ -4,11 +4,11 @@ from ledger.immutable_store.stores.file_store import FileStore
 
 
 class TextFileStore(FileStore):
-    def __init__(self, dbDir, dbName, keyIsLineNo: bool=False):
+    def __init__(self, dbDir, dbName, keyIsLineNo: bool=False, storeContentHash: bool=True):
         # This is the separator between key and value
         self.delimiter = "\t"
         self.lineSep = os.linesep
-        self.keyIsLineNo = keyIsLineNo
+        super().__init__(dbDir, dbName, keyIsLineNo, storeContentHash)
         self._initDB(dbDir, dbName)
 
     def _initDB(self, dbDir, dbName):
