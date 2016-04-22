@@ -218,6 +218,7 @@ def storeHashes(hasherAndTree, addTxns):
 
     return mhs
 
+
 def testEfficientHashStore(hasherAndTree, addTxns, storeHashes):
     h, m, show = hasherAndTree
 
@@ -262,9 +263,9 @@ def getPath(serNo, offset=0):
     pwr = highest_bit_set(serNo-1-offset) - 1
     if pwr <= 0:
         if serNo % 2 == 0:
-            return [serNo, serNo-1], []
+            return [serNo-1], []
         else:
-            return [serNo], []
+            return [], []
     c = pow(2, pwr) + offset
     leafs, nodes = getPath(serNo, c)
     nodes.append(getNodePosition(c, pwr))
@@ -288,16 +289,15 @@ def testLocate(hasherAndTree, addTxns, storeHashes):
         for i, leaf_pos in enumerate(leafs):
             hash = hexlify(mhs.getLeaf(leaf_pos))
             print("leaf: {}".format(hash))
-            if i > 0:
-                calculatedAuditPath.append(hash)
+            calculatedAuditPath.append(hash)
         for node_pos in nodes:
-            hash = hexlify(mhs.getNode(node_pos)[2])
+            start, height, node = mhs.getNode(node_pos)
+            hash = hexlify(node)
             print("node: {}".format(hash))
             calculatedAuditPath.append(hash)
         print("Audit path built using formula {}".format(calculatedAuditPath))
         print("Audit path received while appending leaf {}".format(auditPaths[d]))
         assert calculatedAuditPath == auditPaths[d]
 
-        #
-        # print("{} -> leafs: {}, nodes: {}".format(pos, leafs, nodes))
+        print("{} -> leafs: {}, nodes: {}".format(pos, leafs, nodes))
 
