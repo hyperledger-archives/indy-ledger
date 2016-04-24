@@ -13,6 +13,9 @@ class F(Enum):
     auditPath = 8
     serialNo = 9
     treeSize = 10
+    leafHash = 11
+    nodeHash = 12
+    rowNo = 13
 
 
 class ImmutableStore:
