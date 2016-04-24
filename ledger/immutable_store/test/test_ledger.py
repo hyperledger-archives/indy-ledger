@@ -1,8 +1,6 @@
 import base64
 from collections import OrderedDict
 
-import time
-
 import pytest
 
 from ledger.immutable_store.ledger import Ledger
@@ -45,7 +43,7 @@ ledgerSerializer = CompactSerializer(orderedFields)
 leafSerializer = JsonSerializer()
 
 
-@pytest.mark.skipif(True, "Obsolete")
+@pytest.mark.skipif(True, reason="Obsolete")
 def testAddTxn():
 
     ledger = Ledger(CompactMerkleTree(), dataDir=levelDBDir, serializer=ledgerSerializer)

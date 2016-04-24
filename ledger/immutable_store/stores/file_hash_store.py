@@ -3,6 +3,11 @@ from ledger.immutable_store.stores.hash_store import HashStore
 
 
 class FileHashStore(HashStore):
+    # Hashes are stored as raw bytes. By default each leaf hash is of 32 bytes
+    # and each node hash is too of 32 bytes. The extra 5 bytes in for each node
+    # are used to store the `start` and `height`. `start` takes 4 bytes so it
+    # can support upto 1 billion nodes and height takes 1 byte so it can store
+    # a tree upto the height of 255
     def __init__(self, dataDir, fileNamePrefix="", leafSize=32, nodeSize=37):
         self.dataDir = dataDir
         self.fileNamePrefix = fileNamePrefix
@@ -12,9 +17,8 @@ class FileHashStore(HashStore):
         self.nodesFile = BinaryFileStore(self.dataDir, nodesFileName,
                                          keyIsLineNo=True,
                                          storeContentHash=False)
-        self.leavesFile = BinaryFileStore(self.dataDir,
-                                        leavesFileName,
-                                        keyIsLineNo=True,
+        self.leavesFile = BinaryFileStore(self.dataDir, leavesFileName,
+                                          keyIsLineNo=True,
                                           storeContentHash=False)
 
         # Do not need line separators since each entry is of fixed size
@@ -35,8 +39,18 @@ class FileHashStore(HashStore):
 
     @staticmethod
     def read(store, entryNo, size):
-        store._dbFile.seek((entryNo-1) * size)
-        return store._dbFile.read(size)
+        store.dbFile.seek((entryNo-1) * size)
+        return store.dbFile.read(size)
+
+    @staticmethod
+    def dataGen(dataFactory, startpos, endpos):
+        i = startpos
+        while True:
+            data = dataFactory(i)
+            yield data
+            i += 1
+            if i <= endpos:
+                break
 
     def writeNode(self, node):
         # TODO: Need to have some exception handling around converting to bytes
@@ -47,25 +61,29 @@ class FileHashStore(HashStore):
         data = start + height + nodeHash
         self.write(data, self.nodesFile, self.nodeSize)
 
-    def writeLeaf(self, leaf):
-        self.write(leaf, self.leavesFile, self.leafSize)
+    def writeLeaf(self, leafHash):
+        self.write(leafHash, self.leavesFile, self.leafSize)
 
-    def getNode(self, pos):
+    def readNode(self, pos):
         data = self.read(self.nodesFile, pos, self.nodeSize)
-        # TODO: Should probably check for file size equal to nodeSize
         if len(data) < self.nodeSize:
-            raise ValueError("No node at given position")
+            raise IndexError("No node at given position")
         start = int.from_bytes(data[:4], byteorder='little')
         height = int.from_bytes(data[4:5], byteorder='little')
         nodeHash = data[5:]
         return start, height, nodeHash
 
-    def getLeaf(self, pos):
+    def readLeaf(self, pos):
         data = self.read(self.leavesFile, pos, self.leafSize)
-        # TODO: Should probably check for file size equal to nodeSize
         if len(data) < self.leafSize:
-            raise ValueError("No leaf at given position")
+            raise IndexError("No leaf at given position")
         return data
+
+    def readLeafs(self, startpos, endpos):
+        return self.dataGen(self.readLeaf, startpos, endpos)
+
+    def readNodes(self, startpos, endpos):
+        return self.dataGen(self.readNode, startpos, endpos)
 
     def close(self):
         self.nodesFile.close()

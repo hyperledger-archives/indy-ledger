@@ -37,12 +37,20 @@ def testSimpleReadWrite(nodesLeaves):
         for leaf in leaves:
             fhs.writeLeaf(leaf)
         for i, leaf in enumerate(leaves):
-            assert leaf == fhs.getLeaf(i+1)
+            assert leaf == fhs.readLeaf(i + 1)
 
         for node in nodes:
             fhs.writeNode(node)
         for i, node in enumerate(nodes):
-            assert node == fhs.getNode(i + 1)
+            assert node == fhs.readNode(i + 1)
+
+        lvs = fhs.readLeafs(1, len(leaves))
+        for i, l in enumerate(lvs):
+            assert leaves[i] == l
+
+        nds = fhs.readNodes(1, len(nodes))
+        for i, n in enumerate(nds):
+            assert nodes[i] == n
 
 
 def testIncorrectWrites():
@@ -67,20 +75,20 @@ def testRandomAndRepeatedReads(nodesLeaves):
 
         for i in range(10):
             idx = choice(range(len(leaves)))
-            assert leaves[idx] == fhs.getLeaf(idx+1)
+            assert leaves[idx] == fhs.readLeaf(idx + 1)
 
         for i in range(10):
             idx = choice(range(len(nodes)))
-            assert nodes[idx] == fhs.getNode(idx + 1)
+            assert nodes[idx] == fhs.readNode(idx + 1)
 
         idx = len(leaves) // 2
         # Even if same leaf is read more than once it should return the
         # same value. It checks for proper uses of `seek` method
-        assert leaves[idx] == fhs.getLeaf(idx + 1)
-        assert leaves[idx] == fhs.getLeaf(idx + 1)
+        assert leaves[idx] == fhs.readLeaf(idx + 1)
+        assert leaves[idx] == fhs.readLeaf(idx + 1)
 
         # Even after writing some data, the data at a previous index should not
         # change
         fhs.writeLeaf(leaves[-1])
         fhs.writeLeaf(leaves[0])
-        assert leaves[idx] == fhs.getLeaf(idx + 1)
+        assert leaves[idx] == fhs.readLeaf(idx + 1)

@@ -8,7 +8,8 @@ from ledger.immutable_store.ledger import Ledger
 from ledger.immutable_store.merkle import CompactMerkleTree
 
 
-@pytest.mark.skipif(True, "Ledger implementation changed")
+@pytest.mark.skipif(True, reason="Ledger implementation changing; need to come "
+                                 "back to this once it's stabilized")
 def testTxnPersistence():
     with TemporaryDirectory() as tdir:
         Reply = namedtuple('Reply', ['viewNo', 'reqId', 'result'])

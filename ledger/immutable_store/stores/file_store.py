@@ -3,7 +3,8 @@ from hashlib import sha256
 
 
 class FileStore:
-    def __init__(self, dbDir, dbName, keyIsLineNo: bool=False, storeContentHash: bool=True):
+    def __init__(self, dbDir, dbName, keyIsLineNo: bool=False,
+                 storeContentHash: bool=True):
         self.keyIsLineNo = keyIsLineNo
         self.storeContentHash = storeContentHash
 
@@ -21,20 +22,20 @@ class FileStore:
         if not self.keyIsLineNo:
             if key is None:
                 raise ValueError("Key must be provided for storing the value")
-            self._dbFile.write(key)
-            self._dbFile.write(self.delimiter)
-        self._dbFile.write(value)
+            self.dbFile.write(key)
+            self.dbFile.write(self.delimiter)
+        self.dbFile.write(value)
         # TODO: Consider storing hash optional. The challenge is that then
         # during parsing it has to be checked whether hash is present or not.
         # That can be a trouble id the delimiter is also present inside the value
         if self.storeContentHash:
-            self._dbFile.write(self.delimiter)
+            self.dbFile.write(self.delimiter)
             if isinstance(value, str):
                 value = value.encode()
-            hash = sha256(value).hexdigest()
-            self._dbFile.write(hash)
-        self._dbFile.write(self.lineSep)
-        self._dbFile.flush()
+            hexedHash = sha256(value).hexdigest()
+            self.dbFile.write(hexedHash)
+        self.dbFile.write(self.lineSep)
+        self.dbFile.flush()
 
     def get(self, key):
         for k, v in self.iterator():
@@ -95,7 +96,7 @@ class FileStore:
         if not (include_key or include_value):
             raise ValueError("At least one include_key or include_value "
                              "should be true")
-        self._dbFile.seek(0)
+        self.dbFile.seek(0)
         lines = self._getLines()
         if include_key and include_value:
             return self._keyValueIterator(lines, prefix=prefix)
@@ -121,8 +122,8 @@ class FileStore:
 
     # noinspection PyUnresolvedReferences
     def close(self):
-        self._dbFile.close()
+        self.dbFile.close()
 
     # noinspection PyUnresolvedReferences
     def reset(self):
-        self._dbFile.truncate(0)
+        self.dbFile.truncate(0)

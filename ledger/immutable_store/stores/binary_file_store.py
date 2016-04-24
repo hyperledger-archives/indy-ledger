@@ -20,7 +20,7 @@ class BinaryFileStore(FileStore):
     def _initDB(self, dbDir, dbName):
         super()._initDB(dbDir, dbName)
         self.dbPath = os.path.join(dbDir, "{}.bin".format(dbName))
-        self._dbFile = open(self.dbPath, mode="a+b", buffering=0)
+        self.dbFile = open(self.dbPath, mode="a+b", buffering=0)
 
     def put(self, value, key=None):
         if not (self._isBytes(key) or self._isBytes(value)):
@@ -40,5 +40,5 @@ class BinaryFileStore(FileStore):
 
     def _getLines(self):
         return (line.strip(self.lineSep) for line in
-                self._dbFile.read().split(self.lineSep)
+                self.dbFile.read().split(self.lineSep)
                 if len(line.strip(self.lineSep)) != 0)

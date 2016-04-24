@@ -1,22 +1,30 @@
-from ledger.immutable_store.stores.file_hash_store import FileHashStore
+from collections import namedtuple
 
 
-class TestFileHashStore(FileHashStore):
-    @staticmethod
-    def dataGen(clbk):
-        i = 1
-        while True:
-            try:
-                data = clbk(i)
-            except ValueError:
-                break
-            yield data
-            i += 1
+STH = namedtuple("STH", ["tree_size", "sha256_root_hash"])
 
-    @property
-    def leafs(self):
-        return self.dataGen(self.getLeaf)
 
-    @property
-    def nodes(self):
-        return self.dataGen(self.getNode)
+def checkLeafInclusion(verifier, leafData, leafIndex, proof, treeHead):
+    assert verifier.verify_leaf_inclusion(
+        leaf=leafData,
+        leaf_index=leafIndex,
+        proof=proof,
+        sth=STH(**treeHead))
+
+
+def checkConsistency(tree, verifier):
+    vectors = [(1, 2),
+               (1, 3),
+               (2, 3),
+               (3, 8)]
+
+    for oldsize, newsize in vectors:
+        proof = tree.consistency_proof(oldsize, newsize)
+        oldroot = tree._calc_mth(0, oldsize)
+        newroot = tree._calc_mth(0, newsize)
+
+        assert verifier.verify_tree_consistency(old_tree_size=oldsize,
+                                         new_tree_size=newsize,
+                                         old_root=oldroot,
+                                         new_root=newroot,
+                                         proof=proof)

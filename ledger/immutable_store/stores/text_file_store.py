@@ -14,8 +14,8 @@ class TextFileStore(FileStore):
     def _initDB(self, dbDir, dbName):
         super()._initDB(dbDir, dbName)
         self.dbPath = os.path.join(dbDir, dbName)
-        self._dbFile = open(self.dbPath, mode="a+")
+        self.dbFile = open(self.dbPath, mode="a+")
 
     def _getLines(self):
         return (line.strip(self.lineSep) for line in
-                self._dbFile if len(line.strip(self.lineSep)) != 0)
+                self.dbFile if len(line.strip(self.lineSep)) != 0)

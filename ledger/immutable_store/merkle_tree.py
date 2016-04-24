@@ -44,7 +44,7 @@ class MerkleTree:
         """
 
     @abstractmethod
-    def inclusion_proof(self, m, n):
+    def inclusion_proof(self, start, end):
         pass
 
     @abstractmethod

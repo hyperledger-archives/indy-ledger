@@ -3,17 +3,23 @@ from ledger.immutable_store.stores.hash_store import HashStore
 
 class MemoryHashStore(HashStore):
     def __init__(self):
-        self.nodes = []
-        self.leafs = []
+        self._nodes = []
+        self._leafs = []
 
-    def writeLeaf(self, leaf):
-        self.leafs.append(leaf)
+    def writeLeaf(self, leafHash):
+        self._leafs.append(leafHash)
 
-    def writeNode(self, node):
-        self.nodes.append(node)
+    def writeNode(self, nodeHash):
+        self._nodes.append(nodeHash)
 
-    def getLeaf(self, pos):
-        return self.leafs[pos-1]
+    def readLeaf(self, pos):
+        return self._leafs[pos - 1]
 
-    def getNode(self, pos):
-        return self.nodes[pos-1]
+    def readNode(self, pos):
+        return self._nodes[pos - 1]
+
+    def readLeafs(self, startpos, endpos):
+        return (n for n in self._leafs[startpos-1:endpos-1])
+
+    def readNodes(self, startpos, endpos):
+        return (n for n in self._nodes[startpos-1:endpos-1])

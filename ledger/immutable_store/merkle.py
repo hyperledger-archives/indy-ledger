@@ -1,58 +1,13 @@
-"""Merkle trees.
-
-Benchmark sample code:
-
->>> from ledger import merkle import os
->>> import timeit# generate a few blobs approx the size of a typical cert, takes a few seconds
->>> leaves = [os.urandom(2048) for i in xrange(65536)]
->>> hasher = merkle.TreeHasher()
->>> def timeav(code, n=20):
->>>     return timeit.timeit(
-...         code, setup="from __main__ import hasher, leaves", number=n)/n
-...
-
-# time taken to hash 65536 certs individually
->>> print timeav("[hasher.hash_leaf(l) for l in leaves]")
-1.14574944973
-
-# time taken to hash 65536 certs in a full tree
->>> print timeav("hasher.hash_full_tree(leaves)")
-1.50476324558
-"""
+import base64
+import functools
 import hashlib
 import logging
-from base64 import b64encode
 from binascii import hexlify
-from collections import deque
 
 from ledger.immutable_store import error
 from ledger.immutable_store.merkle_tree import MerkleTree
-
-
-def count_bits_set(i):
-    # from https://wiki.python.org/moin/BitManipulation
-    count = 0
-    while i:
-        i &= i - 1
-        count += 1
-    return count
-
-
-def lowest_bit_set(i):
-    # from https://wiki.python.org/moin/BitManipulation
-    # but with 1-based indexing like in ffs(3) POSIX
-    return highest_bit_set(i & -i)
-
-
-def highest_bit_set(i):
-    # from https://wiki.python.org/moin/BitManipulation
-    # but with 1-based indexing like in ffs(3) POSIX
-    hi = i
-    hiBit = 0
-    while hi:
-        hi >>= 1
-        hiBit += 1
-    return hiBit
+from ledger.immutable_store.stores.hash_store import HashStore
+from ledger.immutable_store.util import count_bits_set, lowest_bit_set
 
 
 class TreeHasher(object):
@@ -137,13 +92,12 @@ class CompactMerkleTree(MerkleTree):
             sorted in descending order of size.
     """
 
-    def __init__(self, hasher=TreeHasher(), tree_size=0, hashes=()):
+    def __init__(self, hasher=TreeHasher(), tree_size=0, hashes=(),
+                 hashStore=None):
 
         # These two queues should be written to two simple position-accessible
         # arrays (files, database tables, etc.)
-        self.leaf_hash_deque = deque()
-        self.node_hash_deque = deque()
-
+        self.hashStore = hashStore  # type: HashStore
         self.__hasher = hasher
         self._update(tree_size, hashes)
 
@@ -237,12 +191,16 @@ class CompactMerkleTree(MerkleTree):
         root_hash, hashes = self.__hasher._hash_full(leaves, 0, size)
         assert hashes == (root_hash,)
 
-        self.leaf_hash_deque.extendleft(hashes)
+        if self.hashStore:
+            for h in hashes:
+                self.hashStore.writeLeaf(h)
 
         new_node_hashes = self.__push_subtree_hash(subtree_h, root_hash)
 
-        self.node_hash_deque.extendleft((self.tree_size, size, hash)
-                                        for size, hash in new_node_hashes)
+        nodes = [(self.tree_size, height, h) for h, height in new_node_hashes]
+        if self.hashStore:
+            for node in nodes:
+                self.hashStore.writeNode(node)
 
     def __push_subtree_hash(self, subtree_h, sub_hash):
         size, mintree_h = 1 << (subtree_h - 1), self.__mintree_height
@@ -258,7 +216,7 @@ class CompactMerkleTree(MerkleTree):
             assert mintree_h < new_mintree_h or new_mintree_h == 0
             next_hash = self.__hasher.hash_children(prev_hash, sub_hash)
 
-            return [(subtree_h, next_hash)] + self.__push_subtree_hash(
+            return [(next_hash, subtree_h)] + self.__push_subtree_hash(
                 subtree_h + 1, next_hash)
 
     def append(self, new_leaf):
@@ -297,6 +255,88 @@ class CompactMerkleTree(MerkleTree):
         new_tree = self.__copy__()
         new_tree.extend(new_leaves)
         return new_tree
+
+    def _calc_mth_hex(self, start, end):
+        mth = self._calc_mth(start, end)
+        return hexlify(mth)
+
+    @functools.lru_cache(maxsize=256)
+    def _calc_mth(self, start, end):
+        if not end > start:
+            raise ValueError("end must be greater than start")
+        if (end - start) == 1:
+            return self.hashStore.readLeaf(end)
+        leafs, nodes = self.hashStore.getPath(end, start)
+        leafHash = self.hashStore.readLeaf(end)
+        hashes = [leafHash, ]
+        for h in leafs:
+            hashes.append(self.hashStore.readLeaf(h))
+        for h in nodes:
+            hashes.append(self.hashStore.readNode(h)[2])
+        foldedHash = self.__hasher._hash_fold(hashes[::-1])
+        return foldedHash
+
+    def consistency_proof(self, first, second):
+        return [self._calc_mth(a, b) for a, b in
+                self._subproof(first, 0, second, True)]
+        # return [base64.b64encode(self._calc_mth(a, b)) for a, b in
+        #         self._subproof(first, 0, second, True)]
+        # proof = []
+        # for a, b in self._subproof(first, 0, second, True):
+        #     mth = self._calc_mth(a, b)
+        #     proof.append(mth)
+        # return proof
+
+    def inclusion_proof(self, start, end):
+        return [self._calc_mth(a, b) for a, b in
+                self._path(start, 0, end)]
+        # return [base64.b64encode(self._calc_mth(a, b)) for a, b in
+        #         self._path(start, 0, end)]
+        # proof = []
+        # for a, b in self._path(start, 0, end):
+        #     mth = hexlify(self._calc_mth(a, b))
+        #     proof.append(mth)
+        # return proof
+
+    def _subproof(self, m, start_n, end_n, b):
+        n = end_n - start_n
+        if m == n:
+            if b:
+                return []
+            else:
+                return [(start_n, end_n)]
+        else:
+            k = 1 << (len(bin(n - 1)) - 3)
+            if m <= k:
+                return self._subproof(m, start_n, start_n + k, b) + [
+                    (start_n + k, end_n)]
+            else:
+                return self._subproof(m - k, start_n + k, end_n, False) + [
+                    (start_n, start_n + k)]
+
+    def _path(self, m, start_n, end_n):
+        n = end_n - start_n
+        if n == 1:
+            return []
+        else:
+            # `k` is the largest power of 2 less than `n`
+            k = 1 << (len(bin(n - 1)) - 3)
+            if m < k:
+                return self._path(m, start_n, start_n + k) + [
+                    (start_n + k, end_n)]
+            else:
+                return self._path(m - k, start_n + k, end_n) + [
+                    (start_n, start_n + k)]
+
+    def get_tree_head(self, seq=None):
+        if seq is None:
+            seq = self.tree_size
+        if seq > self.tree_size:
+            raise IndexError
+        return {
+            'tree_size': seq,
+            'sha256_root_hash': self._calc_mth(0, seq) if seq else None,
+        }
 
 
 class MerkleVerifier(object):
@@ -407,7 +447,8 @@ class MerkleVerifier(object):
             # Now old_hash is the hash of the first subtree. If the two trees
             # have different height, continue the path until the new root.
             while last_node:
-                new_hash = self.hasher.hash_children(new_hash, next(p))
+                n = next(p)
+                new_hash = self.hasher.hash_children(new_hash, n)
                 last_node //= 2
 
             # If the second hash does not match, the proof is invalid for the
@@ -415,18 +456,31 @@ class MerkleVerifier(object):
             # older one doesn't, then the proof (together with the signatures
             # on the hashes) is proof of inconsistency.
             # Continue to find out.
+            # if new_hash != new_root:
+            #     raise error.ProofError("Bad Merkle proof: second root hash "
+            #                            "does not match. Expected hash: %s "
+            #                            ", computed hash: %s" %
+            #                            (b64encode(new_root).strip(),
+            #                             b64encode(new_hash).strip()))
+            # elif old_hash != old_root:
+            #     raise error.ConsistencyError("Inconsistency: first root hash "
+            #                                  "does not match. Expected hash: "
+            #                                  "%s, computed hash: %s" %
+            #                                  (b64encode(old_root).strip(),
+            #                                   b64encode(old_hash).strip())
+            #                                  )
             if new_hash != new_root:
                 raise error.ProofError("Bad Merkle proof: second root hash "
                                        "does not match. Expected hash: %s "
                                        ", computed hash: %s" %
-                                       (b64encode(new_root).strip(),
-                                        b64encode(new_hash).strip()))
+                                       (hexlify(new_root).strip(),
+                                        hexlify(new_hash).strip()))
             elif old_hash != old_root:
                 raise error.ConsistencyError("Inconsistency: first root hash "
                                              "does not match. Expected hash: "
                                              "%s, computed hash: %s" %
-                                             (b64encode(old_root).strip(),
-                                              b64encode(old_hash).strip())
+                                             (hexlify(old_root).strip(),
+                                              hexlify(old_hash).strip())
                                              )
 
         except StopIteration:
@@ -517,10 +571,14 @@ class MerkleVerifier(object):
         if calculated_root_hash == sth.sha256_root_hash:
             return True
 
+        # raise error.ProofError("Constructed root hash differs from provided "
+        #                        "root hash. Constructed: %s Expected: %s" %
+        #                        (b64encode(calculated_root_hash).strip(),
+        #                         b64encode(sth.sha256_root_hash).strip()))
         raise error.ProofError("Constructed root hash differs from provided "
                                "root hash. Constructed: %s Expected: %s" %
-                               (b64encode(calculated_root_hash).strip(),
-                                b64encode(sth.sha256_root_hash).strip()))
+                               (hexlify(calculated_root_hash).strip(),
+                                hexlify(sth.sha256_root_hash).strip()))
 
     @error.returns_true_or_raises
     def verify_leaf_inclusion(self, leaf, leaf_index, proof, sth):
