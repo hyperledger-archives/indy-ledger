@@ -15,7 +15,6 @@ class F(Enum):
     treeSize = 10
     leafHash = 11
     nodeHash = 12
-    rowNo = 13
 
 
 class ImmutableStore:
