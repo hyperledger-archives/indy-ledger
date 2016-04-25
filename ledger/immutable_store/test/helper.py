@@ -20,8 +20,8 @@ def checkConsistency(tree, verifier):
 
     for oldsize, newsize in vectors:
         proof = tree.consistency_proof(oldsize, newsize)
-        oldroot = tree._calc_mth(0, oldsize)
-        newroot = tree._calc_mth(0, newsize)
+        oldroot = tree.merkle_tree_hash(0, oldsize)
+        newroot = tree.merkle_tree_hash(0, newsize)
 
         assert verifier.verify_tree_consistency(old_tree_size=oldsize,
                                          new_tree_size=newsize,

@@ -27,7 +27,7 @@ class FileStore:
         self.dbFile.write(value)
         # TODO: Consider storing hash optional. The challenge is that then
         # during parsing it has to be checked whether hash is present or not.
-        # That can be a trouble id the delimiter is also present inside the value
+        # That can be a trouble if the delimiter is also present inside the value
         if self.storeContentHash:
             self.dbFile.write(self.delimiter)
             if isinstance(value, str):
@@ -42,37 +42,17 @@ class FileStore:
             if k == key:
                 return v
 
-    # noinspection PyUnresolvedReferences
     def _keyIterator(self, lines, prefix=None):
-        i = 0
-        for line in lines:
-            if self.keyIsLineNo:
-                k = str(i)
-                i += 1
-            else:
-                k, v = line.split(self.delimiter, 1)
-            if not prefix or k.startswith(prefix):
-                yield k
+        return self._baseIterator(lines, prefix, True, False)
 
-    # noinspection PyUnresolvedReferences
     def _valueIterator(self, lines, prefix=None):
-        i = 0
-        for line in lines:
-            if self.keyIsLineNo:
-                k = str(i)
-                v = line
-                i += 1
-            else:
-                k, v = line.split(self.delimiter, 1)
-            if self.storeContentHash:
-                value, hash = v.rsplit(self.delimiter, 1)
-            else:
-                value = v
-            if not prefix or k.startswith(prefix):
-                yield value
+        return self._baseIterator(lines, prefix, False, True)
+
+    def _keyValueIterator(self, lines, prefix=None):
+        return self._baseIterator(lines, prefix, True, True)
 
     # noinspection PyUnresolvedReferences
-    def _keyValueIterator(self, lines, prefix=None):
+    def _baseIterator(self, lines, prefix, returnKey, returnValue):
         i = 0
         for line in lines:
             if self.keyIsLineNo:
@@ -81,12 +61,18 @@ class FileStore:
                 i += 1
             else:
                 k, v = line.split(self.delimiter, 1)
-            if self.storeContentHash:
-                value, hash = v.rsplit(self.delimiter, 1)
-            else:
-                value = v
+            if returnValue:
+                if self.storeContentHash:
+                    value, hash = v.rsplit(self.delimiter, 1)
+                else:
+                    value = v
             if not prefix or k.startswith(prefix):
-                yield (k, value)
+                if returnKey and returnValue:
+                    yield (k, value)
+                elif returnKey:
+                    yield k
+                elif returnValue:
+                    yield value
 
     def _getLines(self):
         raise NotImplementedError()
@@ -94,7 +80,7 @@ class FileStore:
     # noinspection PyUnresolvedReferences
     def iterator(self, include_key=True, include_value=True, prefix=None):
         if not (include_key or include_value):
-            raise ValueError("At least one include_key or include_value "
+            raise ValueError("At least one of include_key or include_value "
                              "should be true")
         self.dbFile.seek(0)
         lines = self._getLines()

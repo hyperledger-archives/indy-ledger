@@ -1,40 +1,37 @@
-import base64
 from collections import OrderedDict
 from typing import Dict
-
-import binascii
 
 from ledger.immutable_store.serializers import MappingSerializer
 
 
 class CompactSerializer(MappingSerializer):
 
-    def __init__(self, orderedFields: OrderedDict=None):
-        self.orderedFields = orderedFields
+    def __init__(self, fields: OrderedDict=None):
+        self.fields = fields
         self.delimiter = "|"
 
-    def stringify(self, name, record, orderedFields=None):
-        orderedFields = orderedFields or self.orderedFields
+    def stringify(self, name, record, fields=None):
+        fields = fields or self.fields
         if record is None or record == {}:
             return ""
-        encoder = orderedFields[name][0] or str
+        encoder = fields[name][0] or str
         return encoder(record)
 
-    def destringify(self, name, string, orderedFields=None):
+    def destringify(self, name, string, fields=None):
         if not string:
             return None
-        orderedFields = orderedFields or self.orderedFields
-        decoder = orderedFields[name][1] or str
+        fields = fields or self.fields
+        decoder = fields[name][1] or str
         return decoder(string)
 
-    def serialize(self, data: Dict, orderedFields=None, toBytes=True):
-        orderedFields = orderedFields or self.orderedFields
+    def serialize(self, data: Dict, fields=None, toBytes=True):
+        fields = fields or self.fields
         records = []
 
         def _addToRecords(name, record):
-            records.append(self.stringify(name, record, orderedFields))
+            records.append(self.stringify(name, record, fields))
 
-        for name in orderedFields:
+        for name in fields:
             if "." in name:
                 nameParts = name.split(".")
                 record = data.get(nameParts[0], {})
@@ -49,13 +46,13 @@ class CompactSerializer(MappingSerializer):
             encoded = encoded.encode()
         return encoded
 
-    def deserialize(self, data, orderedFields=None):
-        orderedFields = orderedFields or self.orderedFields
+    def deserialize(self, data, fields=None):
+        fields = fields or self.fields
         if isinstance(data, (bytes, bytearray)):
             data = data.decode()
         data = data.split(self.delimiter)
         result = {}
-        for name in orderedFields:
+        for name in fields:
             if "." in name:
                 nameParts = name.split(".")
                 ref = result
@@ -63,7 +60,7 @@ class CompactSerializer(MappingSerializer):
                     if part not in ref:
                         ref[part] = {}
                     ref = ref[part]
-                ref[nameParts[-1]] = self.destringify(name, data.pop(0), orderedFields)
+                ref[nameParts[-1]] = self.destringify(name, data.pop(0), fields)
             else:
-                result[name] = self.destringify(name, data.pop(0), orderedFields)
+                result[name] = self.destringify(name, data.pop(0), fields)
         return result
