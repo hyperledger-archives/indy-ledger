@@ -1,28 +1,41 @@
 import asyncio
-from collections import namedtuple
+import time
+from collections import OrderedDict, namedtuple
 from tempfile import TemporaryDirectory
-
 import pytest
 
+from ledger.immutable_store.serializers.compact_serializer import CompactSerializer
 from ledger.immutable_store.ledger import Ledger
 from ledger.immutable_store.merkle import CompactMerkleTree
 
+Reply = namedtuple("REPLY", ['result'])
 
-@pytest.mark.skipif(True, reason="Ledger implementation changing; need to come "
-                                 "back to this once it's stabilized")
+
 def testTxnPersistence():
     with TemporaryDirectory() as tdir:
-        Reply = namedtuple('Reply', ['viewNo', 'reqId', 'result'])
         loop = asyncio.get_event_loop()
-        ldb = Ledger(CompactMerkleTree(), tdir)
+        fields = OrderedDict([
+                ("identifier", (str, str)),
+                ("reqId", (str, int)),
+                ("txnId", (str, str)),
+                ("txnTime", (str, float)),
+                ("txnType", (str, str)),
+            ])
+        ldb = Ledger(CompactMerkleTree(), tdir,
+                     serializer=CompactSerializer(fields=fields))
         async def go():
             identifier = "testClientId"
             txnId = "txnId"
-            reply = Reply(1, 1, "theresult")
+            reply = Reply(result={
+                "identifier": identifier,
+                "reqId": 1,
+                "txnId": txnId,
+                "txnTime": time.time(),
+                "txnType": "buy"
+            })
             sizeBeforeInsert = ldb.size
             await ldb.append(identifier, reply, txnId)
-            assert ldb.getBySerialNo(0)['STH']['tree_size'] == 1
-            txn_in_db = await ldb.get(identifier, reply.reqId)
+            txn_in_db = await ldb.get(identifier, reply.result['reqId'])
             assert txn_in_db == reply.result
             assert ldb.size == sizeBeforeInsert + 1
             ldb.reset()

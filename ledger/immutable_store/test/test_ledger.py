@@ -101,8 +101,3 @@ def testRecoverMerkleTreeFromLedger():
     assert ledger2.tree.root_hash() is not None
     ledger2.reset()
     ledger2.stop()
-
-
-# def testTearDown():
-#     ledger_db.drop()
-

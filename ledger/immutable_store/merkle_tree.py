@@ -7,57 +7,40 @@ class MerkleTree:
     Interface to be implemented by all Merkle Trees.
     """
 
-    # TODO Check if @property annotation works with interfaces in Python.
-    # A lot of these could be properties.
-    def append(self, *events):
-        """
-
-        :param events:
-        :return:
-        """
-
     @abstractmethod
-    def getMTH(self):
+    def append(self, new_leaf):
         """
         """
 
     @abstractmethod
-    def getLastEventTimestamp(self):
+    def merkle_tree_hash(self, start, end):
         """
         """
 
     @abstractmethod
-    def getAuditPath(self, event):
-        """
-        """
-
-    @abstractmethod
-    def getProof(self, sth1, sth2):
-        """
-        """
-        # TODO Make the default value of the second STH equal the current STH
-
-    # TODO This should probably go into the Monitor if we decide to have one.
-    @abstractmethod
-    def validate(self, event):
+    def consistency_proof(self, first, second):
         """
         """
 
     @abstractmethod
     def inclusion_proof(self, start, end):
-        pass
+        """
+        """
+
+    @abstractmethod
+    def get_tree_head(self, seq=None):
+        """
+        """
 
     @abstractmethod
     def root_hash(self):
-        pass
-
-    @abstractmethod
-    def root_hash_hex(self):
-        pass
+        """
+        """
 
     @abstractproperty
     def tree_size(self):
-        pass
+        """
+        """
 
 
 class PersistentMerkleTree(MerkleTree):

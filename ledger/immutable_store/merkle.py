@@ -256,12 +256,12 @@ class CompactMerkleTree(MerkleTree):
         new_tree.extend(new_leaves)
         return new_tree
 
-    def _calc_mth_hex(self, start, end):
-        mth = self._calc_mth(start, end)
+    def merkle_tree_hash_hex(self, start, end):
+        mth = self.merkle_tree_hash(start, end)
         return hexlify(mth)
 
     @functools.lru_cache(maxsize=256)
-    def _calc_mth(self, start, end):
+    def merkle_tree_hash(self, start, end):
         if not end > start:
             raise ValueError("end must be greater than start")
         if (end - start) == 1:
@@ -277,26 +277,12 @@ class CompactMerkleTree(MerkleTree):
         return foldedHash
 
     def consistency_proof(self, first, second):
-        return [self._calc_mth(a, b) for a, b in
+        return [self.merkle_tree_hash(a, b) for a, b in
                 self._subproof(first, 0, second, True)]
-        # return [base64.b64encode(self._calc_mth(a, b)) for a, b in
-        #         self._subproof(first, 0, second, True)]
-        # proof = []
-        # for a, b in self._subproof(first, 0, second, True):
-        #     mth = self._calc_mth(a, b)
-        #     proof.append(mth)
-        # return proof
 
     def inclusion_proof(self, start, end):
-        return [self._calc_mth(a, b) for a, b in
+        return [self.merkle_tree_hash(a, b) for a, b in
                 self._path(start, 0, end)]
-        # return [base64.b64encode(self._calc_mth(a, b)) for a, b in
-        #         self._path(start, 0, end)]
-        # proof = []
-        # for a, b in self._path(start, 0, end):
-        #     mth = hexlify(self._calc_mth(a, b))
-        #     proof.append(mth)
-        # return proof
 
     def _subproof(self, m, start_n, end_n, b):
         n = end_n - start_n
@@ -335,7 +321,7 @@ class CompactMerkleTree(MerkleTree):
             raise IndexError
         return {
             'tree_size': seq,
-            'sha256_root_hash': self._calc_mth(0, seq) if seq else None,
+            'sha256_root_hash': self.merkle_tree_hash(0, seq) if seq else None,
         }
 
 
@@ -456,19 +442,6 @@ class MerkleVerifier(object):
             # older one doesn't, then the proof (together with the signatures
             # on the hashes) is proof of inconsistency.
             # Continue to find out.
-            # if new_hash != new_root:
-            #     raise error.ProofError("Bad Merkle proof: second root hash "
-            #                            "does not match. Expected hash: %s "
-            #                            ", computed hash: %s" %
-            #                            (b64encode(new_root).strip(),
-            #                             b64encode(new_hash).strip()))
-            # elif old_hash != old_root:
-            #     raise error.ConsistencyError("Inconsistency: first root hash "
-            #                                  "does not match. Expected hash: "
-            #                                  "%s, computed hash: %s" %
-            #                                  (b64encode(old_root).strip(),
-            #                                   b64encode(old_hash).strip())
-            #                                  )
             if new_hash != new_root:
                 raise error.ProofError("Bad Merkle proof: second root hash "
                                        "does not match. Expected hash: %s "

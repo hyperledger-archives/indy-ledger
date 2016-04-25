@@ -225,8 +225,8 @@ def testCompactMerkleTree(hasherAndTree, verifier):
 
     for d in range(1, 1000):
         verifier.verify_tree_consistency(d, d + 1,
-                                         m._calc_mth(0, d),
-                                         m._calc_mth(0, d+1),
+                                         m.merkle_tree_hash(0, d),
+                                         m.merkle_tree_hash(0, d + 1),
                                          m.consistency_proof(d, d + 1))
 
 
