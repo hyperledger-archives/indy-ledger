@@ -50,7 +50,7 @@ class CompactSerializer(MappingSerializer):
         fields = fields or self.fields
         if isinstance(data, (bytes, bytearray)):
             data = data.decode()
-        data = data.split(self.delimiter)
+        items = data.split(self.delimiter)
         result = {}
         for name in fields:
             if "." in name:
@@ -60,7 +60,7 @@ class CompactSerializer(MappingSerializer):
                     if part not in ref:
                         ref[part] = {}
                     ref = ref[part]
-                ref[nameParts[-1]] = self.destringify(name, data.pop(0), fields)
+                ref[nameParts[-1]] = self.destringify(name, items.pop(0), fields)
             else:
-                result[name] = self.destringify(name, data.pop(0), fields)
+                result[name] = self.destringify(name, items.pop(0), fields)
         return result
