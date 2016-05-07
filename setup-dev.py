@@ -42,7 +42,7 @@ setup(
     author=__author__,
     author_email='dev@evernym.us',
     license=__license__,
-    install_requires=['pymongo', ],
+    keywords='Ledger Merkle',
     setup_requires=['pytest-runner', ],
     tests_require=['pytest', ],
     packages=find_packages(exclude=['test', 'test.*',
