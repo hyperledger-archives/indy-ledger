@@ -38,7 +38,7 @@ setup(
     name='Ledger',
     version=__version__,
     description='Immutable Ledger python library',
-    url='https://github.com/evernym/ledger-priv',
+    url='https://github.com/evernym/ledger',
     author=__author__,
     author_email='dev@evernym.us',
     license=__license__,
