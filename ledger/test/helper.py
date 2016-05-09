@@ -1,7 +1,4 @@
-from collections import namedtuple
-
-
-STH = namedtuple("STH", ["tree_size", "sha256_root_hash"])
+from ledger.util import STH
 
 
 def checkLeafInclusion(verifier, leafData, leafIndex, proof, treeHead):

@@ -125,7 +125,7 @@ class CompactMerkleTreeTest(unittest.TestCase):
             expected_hash = TreeHasherTest.test_vector_hashes[i]
             self.tree = compact_merkle_tree.CompactMerkleTree()
             self.tree.extend(test_vector)
-            root = hexlify(self.tree.root_hash())
+            root = hexlify(self.tree.root_hash)
             self.assertEqual(root, expected_hash)
 
     def test_push_subtree_1(self):
@@ -144,12 +144,12 @@ class CompactMerkleTreeTest(unittest.TestCase):
             test_vector = TreeHasherTest.test_vector_leaves[:i+1]
             expected_hash = TreeHasherTest.test_vector_hashes[i]
             self.tree.extend(test_vector)
-            self.assertEqual(self.tree.root_hash_hex(), expected_hash)
+            self.assertEqual(self.tree.root_hash_hex, expected_hash)
             # add up to z
             test_vector = TreeHasherTest.test_vector_leaves[i+1:]
             expected_hash = TreeHasherTest.test_vector_hashes[z-1]
             self.tree.extend(test_vector)
-            self.assertEqual(self.tree.root_hash_hex(), expected_hash)
+            self.assertEqual(self.tree.root_hash_hex, expected_hash)
 
 
 class MerkleVerifierTest(unittest.TestCase):
@@ -495,7 +495,7 @@ class MerkleVerifierTest(unittest.TestCase):
             # of the tree
             for j in range(tree_size):
               proof = proofs_per_tree_size[tree_size][j]
-              sth = self.STH(tree.root_hash(), tree_size)
+              sth = self.STH(tree.root_hash, tree_size)
               self.assertTrue(
                   verifier.verify_leaf_inclusion(
                       leaves[j], j, proof, sth))

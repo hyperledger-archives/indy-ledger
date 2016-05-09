@@ -7,9 +7,8 @@ from ledger.serializers.mapping_serializer import MappingSerializer
 from ledger.serializers.json_serializer import JsonSerializer
 from ledger.stores.file_store import FileStore
 from ledger.stores.text_file_store import TextFileStore
-from ledger.util import F
-
 from ledger.immutable_store import ImmutableStore
+from ledger.util import F
 
 
 class Ledger(ImmutableStore):
@@ -22,8 +21,6 @@ class Ledger(ImmutableStore):
         it and storing it in the MerkleTree
         :param fileName: the name of the transaction log file
         """
-        # TODO The initialization logic should take care of migrating the
-        # persisted data into a newly created Merkle Tree after server restart.
         self.dataDir = dataDir
         self.tree = tree
         self.leafSerializer = serializer or \
@@ -33,7 +30,7 @@ class Ledger(ImmutableStore):
         self._transactionLog = None  # type: FileStore
         self._transactionLogName = fileName or "transactions"
         self.start()
-        self.seqNo = self.lastCount()
+        self.seqNo = 0
         self.recoverTree()
 
     def recoverTree(self):
@@ -52,7 +49,7 @@ class Ledger(ImmutableStore):
         self.seqNo += 1
         return {
             F.seqNo.name: self.seqNo,
-            F.rootHash.name: base64.b64encode(self.tree.root_hash()).decode(),
+            F.rootHash.name: base64.b64encode(self.tree.root_hash).decode(),
             F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
         }
 
@@ -89,6 +86,10 @@ class Ledger(ImmutableStore):
     def size(self) -> int:
         return self.tree.tree_size
 
+    @property
+    def root_hash(self) -> str:
+        return base64.b64encode(self.tree.root_hash).decode()
+
     def start(self, loop=None):
         if self._transactionLog:
             logging.debug("Ledger already started.")
@@ -104,8 +105,9 @@ class Ledger(ImmutableStore):
     def reset(self):
         self._transactionLog.reset()
 
-    def getAllTxn(self):
+    def getAllTxn(self, frm: int=None, to: int=None):
         result = {}
         for seqNo, txn in self._transactionLog.iterator():
-            result[seqNo] = self.leafSerializer.deserialize(txn)
+            if (frm is None or seqNo >= frm) and (to is None or seqNo <= to):
+                result[seqNo] = self.leafSerializer.deserialize(txn)
         return result

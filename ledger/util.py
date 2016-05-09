@@ -1,3 +1,4 @@
+from collections import namedtuple
 from enum import Enum
 
 
@@ -47,3 +48,6 @@ class F(Enum):
     leafHash = 9
     nodeHash = 10
     height = 11
+
+
+STH = namedtuple("STH", ["tree_size", "sha256_root_hash"])

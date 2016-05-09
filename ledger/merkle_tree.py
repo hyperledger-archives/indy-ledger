@@ -32,12 +32,22 @@ class MerkleTree:
         """
         """
 
-    @abstractmethod
-    def root_hash(self):
+    @abstractproperty
+    def hashes(self) -> Tuple[bytes]:
         """
         """
 
     @abstractproperty
-    def tree_size(self):
+    def root_hash(self) -> bytes:
+        """
+        """
+
+    @abstractproperty
+    def root_hash_hex(self) -> bytes:
+        """
+        """
+
+    @abstractproperty
+    def tree_size(self) -> int:
         """
         """

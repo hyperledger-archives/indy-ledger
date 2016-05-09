@@ -1,8 +1,10 @@
 import logging
 from binascii import hexlify
+from typing import Sequence, List
 
 from ledger import error
 from ledger.tree_hasher import TreeHasher
+from ledger.util import STH
 
 
 class MerkleVerifier(object):
@@ -18,8 +20,9 @@ class MerkleVerifier(object):
         return "%s(hasher: %s)" % (self.__class__.__name__, self.hasher)
 
     @error.returns_true_or_raises
-    def verify_tree_consistency(self, old_tree_size, new_tree_size, old_root,
-                                new_root, proof):
+    def verify_tree_consistency(self, old_tree_size: int, new_tree_size: int,
+                                old_root: bytes, new_root: bytes,
+                                proof: Sequence[bytes]):
         """Verify the consistency between two root hashes.
 
         old_tree_size must be <= new_tree_size.
@@ -149,8 +152,10 @@ class MerkleVerifier(object):
             logging.warning("Proof has extra nodes")
         return True
 
-    def _calculate_root_hash_from_audit_path(self, leaf_hash, node_index,
-                                             audit_path, tree_size):
+    def _calculate_root_hash_from_audit_path(self, leaf_hash: bytes,
+                                             node_index: int,
+                                             audit_path: List[bytes],
+                                             tree_size: int):
         calculated_hash = leaf_hash
         last_node = tree_size - 1
         while last_node > 0:
@@ -176,7 +181,7 @@ class MerkleVerifier(object):
         return calculated_hash
 
     @classmethod
-    def audit_path_length(cls, index, tree_size):
+    def audit_path_length(cls, index: int, tree_size: int):
         length = 0
         last_node = tree_size - 1
         while last_node > 0:
@@ -188,7 +193,8 @@ class MerkleVerifier(object):
         return length
 
     @error.returns_true_or_raises
-    def verify_leaf_hash_inclusion(self, leaf_hash, leaf_index, proof, sth):
+    def verify_leaf_hash_inclusion(self, leaf_hash: bytes, leaf_index: int,
+                                   proof: List[bytes], sth: STH):
         """Verify a Merkle Audit Path.
 
         See section 2.1.1 of RFC6962 for the exact path description.
@@ -224,17 +230,14 @@ class MerkleVerifier(object):
         if calculated_root_hash == sth.sha256_root_hash:
             return True
 
-        # raise error.ProofError("Constructed root hash differs from provided "
-        #                        "root hash. Constructed: %s Expected: %s" %
-        #                        (b64encode(calculated_root_hash).strip(),
-        #                         b64encode(sth.sha256_root_hash).strip()))
         raise error.ProofError("Constructed root hash differs from provided "
                                "root hash. Constructed: %s Expected: %s" %
                                (hexlify(calculated_root_hash).strip(),
                                 hexlify(sth.sha256_root_hash).strip()))
 
     @error.returns_true_or_raises
-    def verify_leaf_inclusion(self, leaf, leaf_index, proof, sth):
+    def verify_leaf_inclusion(self, leaf: bytes, leaf_index: int,
+                                   proof: List[bytes], sth: STH):
         """Verify a Merkle Audit Path.
 
         See section 2.1.1 of RFC6962 for the exact path description.

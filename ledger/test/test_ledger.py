@@ -37,7 +37,6 @@ def tempdir():
         yield tdir
 
 
-# @pytest.mark.skipif(True, reason="Obsolete")
 def testAddTxn(tempdir):
     ledger = Ledger(CompactMerkleTree(), dataDir=tempdir,
                     serializer=ledgerSerializer)
@@ -75,6 +74,6 @@ creation of Signed Tree Heads? I think I don't really understand what STHs are.)
 def testRecoverMerkleTreeFromLedger(tempdir):
     ledger2 = Ledger(CompactMerkleTree(), dataDir=tempdir,
                      serializer=ledgerSerializer)
-    assert ledger2.tree.root_hash() is not None
+    assert ledger2.tree.root_hash is not None
     ledger2.reset()
     ledger2.stop()

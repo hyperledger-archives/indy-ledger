@@ -6,10 +6,12 @@ import pytest
 
 from ledger.compact_merkle_tree import CompactMerkleTree
 from ledger.merkle_verifier import MerkleVerifier
+from ledger.stores.hash_store import HashStore
 from ledger.tree_hasher import TreeHasher
 from ledger.stores.memory_hash_store import MemoryHashStore
 from ledger.stores.file_hash_store import FileHashStore
-from ledger.test.helper import checkConsistency, STH
+from ledger.test.helper import checkConsistency
+from ledger.util import STH
 
 """
 1: 221
@@ -182,7 +184,7 @@ def show(h, m, data):
     print("appended  : {}".format(data))
     print("hash      : {}".format(hexlify(h.hash_leaf(data))[:3]))
     print("tree size : {}".format(m.tree_size))
-    print("root hash : {}".format(m.root_hash_hex()[:3]))
+    print("root hash : {}".format(m.root_hash_hex[:3]))
     for i, hash in enumerate(m.hashes):
         lead = "Hashes" if i == 0 else "      "
         print("{}    : {}".format(lead, hexlify(hash)[:3]))
@@ -209,14 +211,15 @@ def testCompactMerkleTree(hasherAndTree, verifier):
         if d % printEvery == 0:
             show(h, m, data_hex)
             print("audit path is {}".format(audit_path_hex))
-            print("audit path length is {}".format(verifier.audit_path_length(d, d+1)))
+            print("audit path length is {}".format(verifier.audit_path_length(
+                d, d+1)))
             print("audit path calculated length is {}".format(
                 len(audit_path)))
         calculated_root_hash = verifier._calculate_root_hash_from_audit_path(
             h.hash_leaf(data), d, audit_path[:], d+1)
         if d % printEvery == 0:
             print("calculated root hash is {}".format(calculated_root_hash))
-        sth = STH(d + 1, m.root_hash())
+        sth = STH(d+1, m.root_hash)
         verifier.verify_leaf_inclusion(data, d, audit_path, sth)
 
     checkConsistency(m, verifier=verifier)

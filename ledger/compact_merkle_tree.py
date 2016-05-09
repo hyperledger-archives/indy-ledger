@@ -1,5 +1,6 @@
 import functools
 from binascii import hexlify
+from typing import List, Tuple, Sequence
 
 import ledger.merkle_tree as merkle_tree
 from ledger.stores.hash_store import HashStore
@@ -25,7 +26,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
         self.__hasher = hasher
         self._update(tree_size, hashes)
 
-    def _update(self, tree_size, hashes):
+    def _update(self, tree_size: int, hashes: Sequence[bytes]):
         bits_set = count_bits_set(tree_size)
         num_hashes = len(hashes)
         if num_hashes != bits_set:
@@ -37,14 +38,14 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
         self.__mintree_height = lowest_bit_set(tree_size)
         self.__root_hash = None
 
-    def load(self, other):
+    def load(self, other: merkle_tree.MerkleTree):
         """Load this tree from a dumb data object for serialisation.
 
         The object must have attributes tree_size:int and hashes:list.
         """
         self._update(other.tree_size, other.hashes)
 
-    def save(self, other):
+    def save(self, other: merkle_tree.MerkleTree):
         """Save this tree into a dumb data object for serialisation.
 
         The object must have attributes tree_size:int and hashes:list.
@@ -64,13 +65,14 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
         return self.__tree_size
 
     @property
-    def tree_size(self):
+    def tree_size(self) -> int:
         return self.__tree_size
 
     @property
-    def hashes(self):
+    def hashes(self) -> Tuple[bytes]:
         return self.__hashes
 
+    @property
     def root_hash(self):
         """Returns the root hash of this tree. (Only re-computed on change.)"""
         if self.__root_hash is None:
@@ -79,11 +81,12 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
                 if self.__hashes else self.__hasher.hash_empty())
         return self.__root_hash
 
+    @property
     def root_hash_hex(self):
         """Returns the root hash of this tree. (Only re-computed on change.)"""
-        return hexlify(self.root_hash())
+        return hexlify(self.root_hash)
 
-    def _push_subtree(self, leaves):
+    def _push_subtree(self, leaves: List[bytes]):
         """Extend with a full subtree <= the current minimum subtree.
 
         The leaves must form a full subtree, i.e. of size 2^k for some k. If
@@ -126,7 +129,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
             for node in nodes:
                 self.hashStore.writeNode(node)
 
-    def __push_subtree_hash(self, subtree_h, sub_hash):
+    def __push_subtree_hash(self, subtree_h: int, sub_hash: bytes):
         size, mintree_h = 1 << (subtree_h - 1), self.__mintree_height
         if subtree_h < mintree_h or mintree_h == 0:
             self._update(self.tree_size + size, self.hashes + (sub_hash,))
@@ -143,13 +146,13 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
             return [(next_hash, subtree_h)] + self.__push_subtree_hash(
                 subtree_h + 1, next_hash)
 
-    def append(self, new_leaf):
+    def append(self, new_leaf: bytes):
         """Append a new leaf onto the end of this tree and return the audit path"""
         auditPath = list(reversed(self.__hashes))
         self._push_subtree([new_leaf])
         return auditPath
 
-    def extend(self, new_leaves):
+    def extend(self, new_leaves: List[bytes]):
         """Extend this tree with new_leaves on the end.
 
         The algorithm works by using _push_subtree() as a primitive, calling
@@ -174,18 +177,18 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
             self._update(final_size, self.hashes + hashes)
         assert self.tree_size == final_size
 
-    def extended(self, new_leaves):
+    def extended(self, new_leaves: List[bytes]):
         """Returns a new tree equal to this tree extended with new_leaves."""
         new_tree = self.__copy__()
         new_tree.extend(new_leaves)
         return new_tree
 
-    def merkle_tree_hash_hex(self, start, end):
+    def merkle_tree_hash_hex(self, start: int, end: int):
         mth = self.merkle_tree_hash(start, end)
         return hexlify(mth)
 
     @functools.lru_cache(maxsize=256)
-    def merkle_tree_hash(self, start, end):
+    def merkle_tree_hash(self, start: int, end: int):
         if not end > start:
             raise ValueError("end must be greater than start")
         if (end - start) == 1:
@@ -200,7 +203,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
         foldedHash = self.__hasher._hash_fold(hashes[::-1])
         return foldedHash
 
-    def consistency_proof(self, first, second):
+    def consistency_proof(self, first: int, second: int):
         return [self.merkle_tree_hash(a, b) for a, b in
                 self._subproof(first, 0, second, True)]
 
@@ -208,7 +211,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
         return [self.merkle_tree_hash(a, b) for a, b in
                 self._path(start, 0, end)]
 
-    def _subproof(self, m, start_n, end_n, b):
+    def _subproof(self, m, start_n: int, end_n: int, b: int):
         n = end_n - start_n
         if m == n:
             if b:
@@ -224,7 +227,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
                 return self._subproof(m - k, start_n + k, end_n, False) + [
                     (start_n, start_n + k)]
 
-    def _path(self, m, start_n, end_n):
+    def _path(self, m, start_n: int, end_n: int):
         n = end_n - start_n
         if n == 1:
             return []
@@ -238,7 +241,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
                 return self._path(m - k, start_n + k, end_n) + [
                     (start_n, start_n + k)]
 
-    def get_tree_head(self, seq=None):
+    def get_tree_head(self, seq: int=None):
         if seq is None:
             seq = self.tree_size
         if seq > self.tree_size:
