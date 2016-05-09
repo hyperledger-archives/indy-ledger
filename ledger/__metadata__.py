@@ -1,5 +1,5 @@
 """
-plenum package metadata
+Ledger package metadata
 """
 __version_info__ = (0, 0, 11)
 __version__ = '{}.{}.{}'.format(*__version_info__)
