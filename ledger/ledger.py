@@ -108,6 +108,7 @@ class Ledger(ImmutableStore):
     def getAllTxn(self, frm: int=None, to: int=None):
         result = {}
         for seqNo, txn in self._transactionLog.iterator():
+            seqNo = int(seqNo)
             if (frm is None or seqNo >= frm) and (to is None or seqNo <= to):
                 result[seqNo] = self.leafSerializer.deserialize(txn)
         return result
