@@ -55,6 +55,24 @@ class FileStore:
             if k == key:
                 return v
 
+    # noinspection PyUnresolvedReferences
+    def iterator(self, includeKey=True, includeValue=True, prefix=None,
+                 dbFile=None):
+        dbFile = dbFile if dbFile else self.dbFile
+        if not (includeKey or includeValue):
+            raise ValueError("At least one of includeKey or includeValue "
+                             "should be true")
+        # Move to the beginning of file
+        dbFile.seek(0)
+
+        lines = self._getLines(dbFile)
+        if includeKey and includeValue:
+            return self._keyValueIterator(lines, prefix=prefix)
+        elif includeValue:
+            return self._valueIterator(lines, prefix=prefix)
+        else:
+            return self._keyIterator(lines, prefix=prefix)
+
     def _keyIterator(self, lines, prefix=None):
         return self._baseIterator(lines, prefix, True, False)
 
@@ -87,24 +105,8 @@ class FileStore:
                 elif returnValue:
                     yield value
 
-    def _getLines(self):
+    def _getLines(self, dbFile):
         raise NotImplementedError()
-
-    # noinspection PyUnresolvedReferences
-    def iterator(self, includeKey=True, includeValue=True, prefix=None):
-        if not (includeKey or includeValue):
-            raise ValueError("At least one of includeKey or includeValue "
-                             "should be true")
-        # Move to the beginning of file
-        self.dbFile.seek(0)
-
-        lines = self._getLines()
-        if includeKey and includeValue:
-            return self._keyValueIterator(lines, prefix=prefix)
-        elif includeValue:
-            return self._valueIterator(lines, prefix=prefix)
-        else:
-            return self._keyIterator(lines, prefix=prefix)
 
     @property
     def lastKey(self):
