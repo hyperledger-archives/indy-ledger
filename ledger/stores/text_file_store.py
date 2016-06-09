@@ -7,10 +7,9 @@ class TextFileStore(ChunkedFileStore):
     def __init__(self, dbDir, dbName, isLineNoKey: bool=False,
                  storeContentHash: bool=True, chunkSize=1000):
         ChunkedFileStore.__init__(self, dbDir, dbName, isLineNoKey,
-                                  storeContentHash, chunkSize=1000)
+                                  storeContentHash, chunkSize)
         self.delimiter = "\t"  # separator between key and value
         self.lineSep = os.linesep
-        super().__init__(dbDir, dbName, isLineNoKey, storeContentHash)
         self._initDB(dbDir, dbName)
 
     def _initDB(self, dbDir, dbName):
