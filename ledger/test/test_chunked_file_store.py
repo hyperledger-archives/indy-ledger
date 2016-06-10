@@ -1,7 +1,7 @@
 import os, random
 import pytest
 
-from ledger.stores.text_file_store import TextFileStore
+from ledger.stores.text_file_store import ChunkedTextFileStore
 
 
 def countLines(fname) -> int:
@@ -12,17 +12,18 @@ def countLines(fname) -> int:
 def getValue(key) -> str:
     return str(key) + ' Some data'
 
+
 chunkSize = 2
 dataSize = 100
 
 
 @pytest.fixture(scope="module")
-def chunkedTextFileStore() -> TextFileStore:
-    return TextFileStore('/tmp', 'chunked_data', True, True, chunkSize)
+def chunkedTextFileStore() -> ChunkedTextFileStore:
+    return ChunkedTextFileStore('/tmp', 'chunked_data', True, True, chunkSize)
 
 
 @pytest.fixture(scope="module")
-def populatedChunkedFileStore(chunkedTextFileStore) -> TextFileStore:
+def populatedChunkedFileStore(chunkedTextFileStore) -> ChunkedTextFileStore:
     store = chunkedTextFileStore
     store.reset()
     dirPath = '/tmp/chunked_data'
@@ -42,7 +43,6 @@ def testWriteToNewFileOnceChunkSizeIsReached(populatedChunkedFileStore):
 def testRandomRetrievalFromChunkedFiles(populatedChunkedFileStore):
     store = populatedChunkedFileStore
     store.open()
-    key = random.randrange(1, dataSize+1)
+    key = random.randrange(1, dataSize + 1)
     value = getValue(key)
     assert store.get(key) == value
-

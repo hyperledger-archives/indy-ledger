@@ -6,7 +6,7 @@ from ledger.merkle_tree import MerkleTree
 from ledger.serializers.mapping_serializer import MappingSerializer
 from ledger.serializers.json_serializer import JsonSerializer
 from ledger.stores.file_store import FileStore
-from ledger.stores.text_file_store import TextFileStore
+from ledger.stores.text_file_store import ChunkedTextFileStore
 from ledger.immutable_store import ImmutableStore
 from ledger.util import F
 
@@ -95,7 +95,7 @@ class Ledger(ImmutableStore):
             logging.debug("Ledger already started.")
         else:
             logging.debug("Starting ledger...")
-            self._transactionLog = TextFileStore(self.dataDir,
+            self._transactionLog = ChunkedTextFileStore(self.dataDir,
                                                  self._transactionLogName,
                                                  isLineNoKey=True)
 
