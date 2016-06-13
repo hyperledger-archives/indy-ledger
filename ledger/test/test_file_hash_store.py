@@ -42,7 +42,7 @@ def testSimpleReadWrite(nodesLeaves):
         for node in nodes:
             fhs.writeNode(node)
         for i, node in enumerate(nodes):
-            assert node == fhs.readNode(i + 1)
+            assert node[2] == fhs.readNode(i + 1)
 
         lvs = fhs.readLeafs(1, len(leaves))
         for i, l in enumerate(lvs):
@@ -50,7 +50,7 @@ def testSimpleReadWrite(nodesLeaves):
 
         nds = fhs.readNodes(1, len(nodes))
         for i, n in enumerate(nds):
-            assert nodes[i] == n
+            assert nodes[i][2] == n
 
 
 def testIncorrectWrites():
@@ -79,7 +79,7 @@ def testRandomAndRepeatedReads(nodesLeaves):
 
         for i in range(10):
             idx = choice(range(len(nodes)))
-            assert nodes[idx] == fhs.readNode(idx + 1)
+            assert nodes[idx][2] == fhs.readNode(idx + 1)
 
         idx = len(leaves) // 2
         # Even if same leaf is read more than once it should return the

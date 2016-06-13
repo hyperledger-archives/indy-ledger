@@ -7,6 +7,7 @@ from ledger.ledger import Ledger
 from ledger.serializers.json_serializer import JsonSerializer
 from ledger.serializers.compact_serializer import CompactSerializer
 from ledger.compact_merkle_tree import CompactMerkleTree
+from ledger.stores.file_hash_store import FileHashStore
 
 
 def b64e(s):
@@ -77,3 +78,20 @@ def testRecoverMerkleTreeFromLedger(tempdir):
     assert ledger2.tree.root_hash is not None
     ledger2.reset()
     ledger2.stop()
+
+
+def testRecoverLedgerFromHashStore(tempdir):
+    fhs = FileHashStore(tempdir)
+    tree = CompactMerkleTree(hashStore=fhs)
+    ledger = Ledger(tree=tree, dataDir=tempdir)
+    for d in range(10):
+        ledger.add(str(d).encode())
+    updatedTree = ledger.tree
+    ledger.stop()
+
+    tree = CompactMerkleTree(hashStore=fhs)
+    restartedLedger = Ledger(tree=tree, dataDir=tempdir)
+    assert restartedLedger.size == ledger.size
+    assert restartedLedger.root_hash == ledger.root_hash
+    assert restartedLedger.tree.hashes == updatedTree.hashes
+    assert restartedLedger.tree.root_hash == updatedTree.root_hash

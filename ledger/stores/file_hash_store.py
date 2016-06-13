@@ -8,7 +8,7 @@ class FileHashStore(HashStore):
     # are used to store the `start` and `height`. `start` takes 4 bytes so it
     # can support upto 1 billion nodes and height takes 1 byte so it can store
     # a tree upto the height of 255
-    def __init__(self, dataDir, fileNamePrefix="", leafSize=32, nodeSize=37):
+    def __init__(self, dataDir, fileNamePrefix="", leafSize=32, nodeSize=32):
         self.dataDir = dataDir
         self.fileNamePrefix = fileNamePrefix
         nodesFileName = fileNamePrefix + "_merkleNodes"
@@ -55,10 +55,11 @@ class FileHashStore(HashStore):
     def writeNode(self, node):
         # TODO: Need to have some exception handling around converting to bytes
         # since they can result in `OverflowError`
-        start, height, nodeHash = node
-        start = start.to_bytes(4, byteorder='little')
-        height = height.to_bytes(1, byteorder='little')
-        data = start + height + nodeHash
+        # start, height, nodeHash = node
+        # start = start.to_bytes(4, byteorder='little')
+        # height = height.to_bytes(1, byteorder='little')
+        # data = start + height + nodeHash
+        data = node[2]
         self.write(data, self.nodesFile, self.nodeSize)
 
     def writeLeaf(self, leafHash):
@@ -68,10 +69,11 @@ class FileHashStore(HashStore):
         data = self.read(self.nodesFile, pos, self.nodeSize)
         if len(data) < self.nodeSize:
             raise IndexError("No node at given position")
-        start = int.from_bytes(data[:4], byteorder='little')
-        height = int.from_bytes(data[4:5], byteorder='little')
-        nodeHash = data[5:]
-        return start, height, nodeHash
+        # start = int.from_bytes(data[:4], byteorder='little')
+        # height = int.from_bytes(data[4:5], byteorder='little')
+        # nodeHash = data[5:]
+        # return start, height, nodeHash
+        return data
 
     def readLeaf(self, pos):
         data = self.read(self.leavesFile, pos, self.leafSize)
@@ -84,6 +86,10 @@ class FileHashStore(HashStore):
 
     def readNodes(self, startpos, endpos):
         return self.dataGen(self.readNode, startpos, endpos)
+
+    @property
+    def leafCount(self) -> int:
+        return self.leavesFile.dbFile.seek(0,2) // self.leafSize
 
     def close(self):
         self.nodesFile.close()

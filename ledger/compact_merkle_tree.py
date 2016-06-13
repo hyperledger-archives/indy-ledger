@@ -199,7 +199,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
         for h in leafs:
             hashes.append(self.hashStore.readLeaf(h))
         for h in nodes:
-            hashes.append(self.hashStore.readNode(h)[2])
+            hashes.append(self.hashStore.readNode(h))
         foldedHash = self.__hasher._hash_fold(hashes[::-1])
         return foldedHash
 
