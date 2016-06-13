@@ -6,7 +6,11 @@ class FileStore:
     """
     A file based implementation of a key value store.
     """
-    def __init__(self, dbDir, dbName, isLineNoKey: bool=False,
+
+    def __init__(self,
+                 dbDir,
+                 dbName,
+                 isLineNoKey: bool=False,
                  storeContentHash: bool=True):
         """
         :param dbDir: The directory where the file storing the data would be
@@ -56,34 +60,37 @@ class FileStore:
                 return v
 
     # noinspection PyUnresolvedReferences
-    def iterator(self, includeKey=True, includeValue=True, prefix=None,
+    def iterator(self,
+                 includeKey=True,
+                 includeValue=True,
+                 prefix=None,
                  dbFile=None):
-        dbFile = dbFile if dbFile else self.dbFile
         if not (includeKey or includeValue):
             raise ValueError("At least one of includeKey or includeValue "
                              "should be true")
-        # Move to the beginning of file
-        dbFile.seek(0)
-
-        lines = self._getLines(dbFile)
         if includeKey and includeValue:
-            return self._keyValueIterator(lines, prefix=prefix)
+            return self._keyValueIterator(prefix, dbFile)
         elif includeValue:
-            return self._valueIterator(lines, prefix=prefix)
+            return self._valueIterator(prefix, dbFile)
         else:
-            return self._keyIterator(lines, prefix=prefix)
+            return self._keyIterator(prefix, dbFile)
 
-    def _keyIterator(self, lines, prefix=None):
-        return self._baseIterator(lines, prefix, True, False)
+    def _keyIterator(self, prefix=None, dbFile=None):
+        return self._baseIterator(prefix, True, False, dbFile)
 
-    def _valueIterator(self, lines, prefix=None):
-        return self._baseIterator(lines, prefix, False, True)
+    def _valueIterator(self, prefix=None, dbFile=None):
+        return self._baseIterator(prefix, False, True, dbFile)
 
-    def _keyValueIterator(self, lines, prefix=None):
-        return self._baseIterator(lines, prefix, True, True)
+    def _keyValueIterator(self, prefix=None, dbFile=None):
+        return self._baseIterator(prefix, True, True, dbFile)
 
     # noinspection PyUnresolvedReferences
-    def _baseIterator(self, lines, prefix, returnKey: bool, returnValue: bool):
+    def _baseIterator(self, prefix, returnKey: bool, returnValue: bool, dbFile: str=None):
+        # Move to the beginning of file
+        dbFile = dbFile or self.dbFile
+        dbFile.seek(0)
+        lines = self._getLines(dbFile)
+
         i = 1
         for line in lines:
             if self.isLineNoKey:

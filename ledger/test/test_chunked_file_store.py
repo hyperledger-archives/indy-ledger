@@ -1,4 +1,5 @@
-import os, random
+import os
+import random
 import pytest
 
 from ledger.stores.text_file_store import ChunkedTextFileStore
@@ -41,8 +42,12 @@ def testWriteToNewFileOnceChunkSizeIsReached(populatedChunkedFileStore):
 
 
 def testRandomRetrievalFromChunkedFiles(populatedChunkedFileStore):
-    store = populatedChunkedFileStore
-    store.open()
     key = random.randrange(1, dataSize + 1)
     value = getValue(key)
-    assert store.get(key) == value
+    assert populatedChunkedFileStore.get(key) == value
+
+
+def testIterateOverChunkedFileStore(populatedChunkedFileStore):
+    store = populatedChunkedFileStore
+    iterator = store.iterator()
+    assert sum(1 for _ in iterator) == dataSize

@@ -19,10 +19,13 @@ class ChunkedFileStore(FileStore):
 
     firstFileName = '1'
 
-    def __init__(self, dbDir, dbName, isLineNoKey: bool = False,
-                 storeContentHash: bool = True, chunkSize=1000):
-        FileStore.__init__(self, dbDir, dbName, isLineNoKey,
-                           storeContentHash)
+    def __init__(self,
+                 dbDir,
+                 dbName,
+                 isLineNoKey: bool=False,
+                 storeContentHash: bool=True,
+                 chunkSize=1000):
+        FileStore.__init__(self, dbDir, dbName, isLineNoKey, storeContentHash)
         self.chunkSize = chunkSize
         self.lineNum = 1
         self.dbFile = None
@@ -61,8 +64,9 @@ class ChunkedFileStore(FileStore):
         self.dbFile.close()
         currentChunk = int(self.dbFile.name.split(os.path.sep)[-1])
         nextChunk = currentChunk + self.chunkSize
-        self.dbFile = open(os.path.join(self.dataDir, str(nextChunk)),
-                           mode="a+")
+        self.dbFile = open(
+            os.path.join(self.dataDir, str(nextChunk)),
+            mode="a+")
 
     def put(self, value, key=None) -> None:
         """
@@ -84,10 +88,9 @@ class ChunkedFileStore(FileStore):
         fileNo = int(key) - remainder + addend if remainder \
             else key - self.chunkSize + addend
         keyToCompare = str(self.chunkSize if not remainder else remainder)
-        chunkedFile = open(os.path.join(self.dataDir, str(fileNo)), mode="a+")
+        chunkedFile = os.path.join(self.dataDir, str(fileNo))
         for k, v in self.iterator(dbFile=chunkedFile):
             if k == keyToCompare:
-                chunkedFile.close()
                 return v
 
     def reset(self) -> None:
@@ -100,6 +103,15 @@ class ChunkedFileStore(FileStore):
 
     def _getLines(self, dbFile) -> List[str]:
         raise NotImplementedError()
+
+    def _baseIterator(self, prefix, returnKey: bool, returnValue: bool, dbFile: str=None):
+        if dbFile:
+            with open(dbFile, 'r') as fil:
+                yield from super()._baseIterator(prefix, returnKey, returnValue, fil)
+        else:
+            for fil in os.listdir(self.dataDir):
+                with open(os.path.join(self.dataDir, fil), 'r') as dbFile:
+                    yield from super()._baseIterator(prefix, returnKey, returnValue, dbFile)
 
     def open(self) -> None:
         self.dbFile = open(self._getLatestFile(), mode="a+")
