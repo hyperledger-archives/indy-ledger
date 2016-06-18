@@ -4,6 +4,7 @@ from typing import List, Tuple, Sequence
 
 import ledger.merkle_tree as merkle_tree
 from ledger.stores.hash_store import HashStore
+from ledger.stores.memory_hash_store import MemoryHashStore
 from ledger.tree_hasher import TreeHasher
 from ledger.util import count_bits_set, lowest_bit_set
 
@@ -22,7 +23,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
 
         # These two queues should be written to two simple position-accessible
         # arrays (files, database tables, etc.)
-        self.hashStore = hashStore  # type: HashStore
+        self.hashStore = hashStore or MemoryHashStore()  # type: HashStore
         self.__hasher = hasher
         self._update(tree_size, hashes)
 
@@ -146,8 +147,9 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
             return [(next_hash, subtree_h)] + self.__push_subtree_hash(
                 subtree_h + 1, next_hash)
 
-    def append(self, new_leaf: bytes):
-        """Append a new leaf onto the end of this tree and return the audit path"""
+    def append(self, new_leaf: bytes) -> List[bytes]:
+        """Append a new leaf onto the end of this tree and return the
+        audit path"""
         auditPath = list(reversed(self.__hashes))
         self._push_subtree([new_leaf])
         return auditPath

@@ -71,6 +71,11 @@ class HashStore:
         """
         pass
 
+    @property
+    @abstractmethod
+    def leafCount(self) -> int:
+        pass
+
     @classmethod
     def getNodePosition(cls, start, height=None) -> int:
         """

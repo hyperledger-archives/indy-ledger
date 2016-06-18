@@ -25,7 +25,7 @@ class BinaryFileStore(FileStore):
         self.dbFile = open(self.dbPath, mode="a+b", buffering=0)
 
     def put(self, value, key=None):
-        if not (self._isBytes(key) or self._isBytes(value)):
+        if not ((not key or self._isBytes(key)) and self._isBytes(value)):
             raise ValueError("key and value need to be bytes-like object")
         super().put(key=key, value=value)
 

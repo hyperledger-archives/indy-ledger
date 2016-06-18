@@ -39,19 +39,26 @@ class Ledger(ImmutableStore):
         if isinstance(self.tree, CompactMerkleTree):
             # TODO: Should probably have 2 classes of hash store, persistent
             # and non persistent
-            if not self.tree.hashStore or isinstance(self.tree.hashStore,
-                                                     MemoryHashStore):
-                for key, entry in self._transactionLog.iterator():
-                    record = self.leafSerializer.deserialize(entry)
-                    self._addToTree(record)
+            if not self.tree.hashStore \
+                    or isinstance(self.tree.hashStore, MemoryHashStore) \
+                    or self.tree.hashStore.leafCount == 0:
+                self.recoverTreeFromTxnLog()
             else:
-                treeSize = self.tree.hashStore.leafCount
-                self.seqNo = treeSize
-                hashes = list(reversed(self.tree.inclusion_proof(
-                    treeSize, treeSize + 1)))
-                self.tree._update(self.tree.hashStore.leafCount, hashes)
+                self.recoverTreeFromHashStore()
         else:
             logging.error("Do not know how to recover {}".format(self.tree))
+
+    def recoverTreeFromTxnLog(self):
+        for key, entry in self._transactionLog.iterator():
+            record = self.leafSerializer.deserialize(entry)
+            self._addToTree(record)
+
+    def recoverTreeFromHashStore(self):
+        treeSize = self.tree.hashStore.leafCount
+        self.seqNo = treeSize
+        hashes = list(reversed(self.tree.inclusion_proof(
+            treeSize, treeSize + 1)))
+        self.tree._update(self.tree.hashStore.leafCount, hashes)
 
     def add(self, leaf):
         leafData = self._addToTree(leaf)
@@ -59,7 +66,7 @@ class Ledger(ImmutableStore):
         return leafData
 
     def _addToTree(self, leafData):
-        serializedLeafData = self.preHashingSerializer.serialize(leafData)
+        serializedLeafData = self.serializeLeaf(leafData)
         auditPath = self.tree.append(serializedLeafData)
         self.seqNo += 1
         return {
@@ -97,6 +104,9 @@ class Ledger(ImmutableStore):
         key = self._transactionLog.lastKey
         return 0 if key is None else int(key)
 
+    def serializeLeaf(self, leafData):
+        return self.preHashingSerializer.serialize(leafData)
+
     @property
     def size(self) -> int:
         return self.tree.tree_size
@@ -124,6 +134,7 @@ class Ledger(ImmutableStore):
         result = {}
         for seqNo, txn in self._transactionLog.iterator():
             seqNo = int(seqNo)
-            if (frm is None or seqNo >= frm) and (to is None or seqNo <= to):
+            if (frm is None or seqNo >= frm) and \
+                    (to is None or seqNo <= to):
                 result[seqNo] = self.leafSerializer.deserialize(txn)
         return result

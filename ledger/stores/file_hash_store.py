@@ -31,10 +31,10 @@ class FileHashStore(HashStore):
     def write(data, store, size):
         if not isinstance(data, bytes):
             data = data.encode()
-        dataaSize = len(data)
-        if dataaSize != size:
+        dataSize = len(data)
+        if dataSize != size:
             raise ValueError("Data size not allowed. Size of the data should be "
-                             "{} but instead was {}".format(size, dataaSize))
+                             "{} but instead was {}".format(size, dataSize))
         store.put(value=data)
 
     @staticmethod

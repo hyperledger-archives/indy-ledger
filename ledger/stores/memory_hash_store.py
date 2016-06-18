@@ -23,3 +23,7 @@ class MemoryHashStore(HashStore):
 
     def readNodes(self, startpos, endpos):
         return (n for n in self._nodes[startpos-1:endpos-1])
+
+    @property
+    def leafCount(self) -> int:
+        return len(self._leafs)
