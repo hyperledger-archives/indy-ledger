@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, abstractproperty
 
 from ledger.util import count_bits_set
 from ledger.util import highest_bit_set
@@ -71,9 +71,13 @@ class HashStore:
         """
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def leafCount(self) -> int:
+        pass
+
+    @leafCount.setter
+    @abstractmethod
+    def leafCount(self, count: int) -> None:
         pass
 
     @classmethod

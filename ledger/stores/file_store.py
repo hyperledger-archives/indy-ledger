@@ -129,5 +129,10 @@ class FileStore:
         self.dbFile.close()
 
     # noinspection PyUnresolvedReferences
+    @property
+    def closed(self):
+        return self.dbFile.closed
+
+    # noinspection PyUnresolvedReferences
     def reset(self):
         self.dbFile.truncate(0)

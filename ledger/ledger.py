@@ -116,7 +116,7 @@ class Ledger(ImmutableStore):
         return base64.b64encode(self.tree.root_hash).decode()
 
     def start(self, loop=None):
-        if self._transactionLog:
+        if self._transactionLog and not self._transactionLog.closed:
             logging.debug("Ledger already started.")
         else:
             logging.debug("Starting ledger...")
