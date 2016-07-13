@@ -14,7 +14,7 @@ class TextFileStore(FileStore):
 
     def _initDB(self, dbDir, dbName):
         super()._initDB(dbDir, dbName)
-        self.dbPath = os.path.join(dbDir, dbName)
+        self.dbPath = os.path.join(os.path.expanduser(dbDir), dbName)
         self.dbFile = open(self.dbPath, mode="a+")
 
     def _getLines(self):
