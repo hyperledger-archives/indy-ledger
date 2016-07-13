@@ -131,7 +131,10 @@ def verifier(hasher):
 
 @pytest.fixture()
 def hasherAndTree(hasher):
-    m = CompactMerkleTree(hasher=hasher, hashStore=MemoryHashStore())
+    tdir = TemporaryDirectory().name
+    store = FileHashStore(tdir)
+    # m = CompactMerkleTree(hasher=hasher, hashStore=MemoryHashStore())
+    m = CompactMerkleTree(hasher=hasher, hashStore=store)
     return hasher, m
 
 
