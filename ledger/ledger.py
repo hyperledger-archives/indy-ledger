@@ -81,10 +81,11 @@ class Ledger(ImmutableStore):
                                  value=self.leafSerializer.serialize(
                                      data, toBytes=False))
 
-    async def append(self, identifier: str, reply, txnId: str):
-        merkleInfo = self.add(reply.result)
+    def append(self, txn):
+        merkleInfo = self.add(txn)
         return merkleInfo
 
+    # TODO: Why is this async?
     async def get(self, identifier: str, reqId: int):
         for value in self._transactionLog.iterator(includeKey=False):
             data = self.leafSerializer.deserialize(value)
@@ -134,6 +135,8 @@ class Ledger(ImmutableStore):
         result = {}
         for seqNo, txn in self._transactionLog.iterator():
             seqNo = int(seqNo)
+            # TODO: This is inefficient. If `to` is provided then the loop
+            # should break as soon as `seqNo` is greater than `to`
             if (frm is None or seqNo >= frm) and \
                     (to is None or seqNo <= to):
                 result[seqNo] = self.leafSerializer.deserialize(txn)
