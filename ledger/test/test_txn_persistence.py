@@ -33,7 +33,7 @@ def testTxnPersistence():
                 "txnType": "buy"
             })
             sizeBeforeInsert = ldb.size
-            await ldb.append(identifier, reply, txnId)
+            ldb.append(reply.result)
             txn_in_db = await ldb.get(identifier, reply.result['reqId'])
             assert txn_in_db == reply.result
             assert ldb.size == sizeBeforeInsert + 1
