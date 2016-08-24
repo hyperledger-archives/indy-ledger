@@ -27,7 +27,7 @@ class Ledger(ImmutableStore):
         self.tree = tree
         self.leafSerializer = serializer or \
                               JsonSerializer()  # type: MappingSerializer
-        self.preHashingSerializer = JsonSerializer()
+        # self.preHashingSerializer = JsonSerializer()
         self.hasher = TreeHasher()
         self._transactionLog = None  # type: FileStore
         self._transactionLogName = fileName or "transactions"
@@ -42,8 +42,10 @@ class Ledger(ImmutableStore):
             if not self.tree.hashStore \
                     or isinstance(self.tree.hashStore, MemoryHashStore) \
                     or self.tree.hashStore.leafCount == 0:
+                logging.debug("Recovering tree from transaction log")
                 self.recoverTreeFromTxnLog()
             else:
+                logging.debug("Recovering tree from hash store")
                 self.recoverTreeFromHashStore()
         else:
             logging.error("Do not know how to recover {}".format(self.tree))
@@ -66,14 +68,19 @@ class Ledger(ImmutableStore):
         return leafData
 
     def _addToTree(self, leafData):
+        logging.debug("Serializing {}".format(leafData))
         serializedLeafData = self.serializeLeaf(leafData)
+        logging.debug("Adding to tree {}".format(serializedLeafData))
         auditPath = self.tree.append(serializedLeafData)
         self.seqNo += 1
-        return {
+        merkleInfo = {
             F.seqNo.name: self.seqNo,
             F.rootHash.name: base64.b64encode(self.tree.root_hash).decode(),
             F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
         }
+        logging.debug(
+            "got merkle proof {}".format(merkleInfo))
+        return merkleInfo
 
     def _addToStore(self, data):
         key = str(self.seqNo)
@@ -106,7 +113,7 @@ class Ledger(ImmutableStore):
         return 0 if key is None else int(key)
 
     def serializeLeaf(self, leafData):
-        return self.preHashingSerializer.serialize(leafData)
+        return self.leafSerializer.serialize(leafData)
 
     @property
     def size(self) -> int:
