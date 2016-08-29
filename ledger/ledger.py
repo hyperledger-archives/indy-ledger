@@ -68,9 +68,7 @@ class Ledger(ImmutableStore):
         return leafData
 
     def _addToTree(self, leafData):
-        logging.debug("Serializing {}".format(leafData))
         serializedLeafData = self.serializeLeaf(leafData)
-        logging.debug("Adding to tree {}".format(serializedLeafData))
         auditPath = self.tree.append(serializedLeafData)
         self.seqNo += 1
         merkleInfo = {
@@ -78,8 +76,6 @@ class Ledger(ImmutableStore):
             F.rootHash.name: base64.b64encode(self.tree.root_hash).decode(),
             F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
         }
-        logging.debug(
-            "got merkle proof {}".format(merkleInfo))
         return merkleInfo
 
     def _addToStore(self, data):
@@ -142,9 +138,9 @@ class Ledger(ImmutableStore):
         result = {}
         for seqNo, txn in self._transactionLog.iterator():
             seqNo = int(seqNo)
-            # TODO: This is inefficient. If `to` is provided then the loop
-            # should break as soon as `seqNo` is greater than `to`
             if (frm is None or seqNo >= frm) and \
                     (to is None or seqNo <= to):
                 result[seqNo] = self.leafSerializer.deserialize(txn)
+            if to is not None and seqNo > to:
+                break
         return result
