@@ -51,8 +51,8 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
 
         The object must have attributes tree_size:int and hashes:list.
         """
-        other.tree_size = self.__tree_size
-        other.hashes[:] = self.__hashes
+        other.__tree_size = self.__tree_size
+        other.__hashes = self.__hashes
 
     def __copy__(self):
         return self.__class__(self.__hasher, self.__tree_size, self.__hashes)

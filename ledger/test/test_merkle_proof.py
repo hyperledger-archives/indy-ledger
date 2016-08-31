@@ -232,6 +232,16 @@ def testCompactMerkleTree(hasherAndTree, verifier):
                                          m.merkle_tree_hash(0, d + 1),
                                          m.consistency_proof(d, d + 1))
 
+    newTree = CompactMerkleTree(hasher=h)
+    m.save(newTree)
+    assert m.root_hash == newTree.root_hash
+    assert m.hashes == newTree.hashes
+
+    newTree = CompactMerkleTree(hasher=h)
+    newTree.load(m)
+    assert m.root_hash == newTree.root_hash
+    assert m.hashes == newTree.hashes
+
 
 def testEfficientHashStore(hasherAndTree, addTxns, storeHashes):
     h, m = hasherAndTree
