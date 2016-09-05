@@ -12,6 +12,7 @@ def checkLeafInclusion(verifier, leafData, leafIndex, proof, treeHead):
 def checkConsistency(tree, verifier):
     vectors = [(1, 2),
                (1, 3),
+               (4, 5),
                (2, 3),
                (3, 8)]
 

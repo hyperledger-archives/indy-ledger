@@ -1,5 +1,6 @@
 import time
 from binascii import hexlify, unhexlify
+from copy import copy
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -239,6 +240,10 @@ def testCompactMerkleTree(hasherAndTree, verifier):
 
     newTree = CompactMerkleTree(hasher=h)
     newTree.load(m)
+    assert m.root_hash == newTree.root_hash
+    assert m.hashes == newTree.hashes
+
+    newTree = copy(m)
     assert m.root_hash == newTree.root_hash
     assert m.hashes == newTree.hashes
 
