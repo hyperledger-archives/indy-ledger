@@ -12,10 +12,10 @@ class ImmutableStore:
     def stop(self):
         raise NotImplementedError()
 
-    async def append(self, reply):
+    def append(self, reply):
         raise NotImplementedError()
 
-    async def get(self, identifier: str, reqId: int):
+    def get(self, identifier: str, reqId: int):
         raise NotImplementedError()
 
     def size(self) -> int:

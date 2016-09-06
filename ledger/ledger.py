@@ -88,12 +88,10 @@ class Ledger(ImmutableStore):
         merkleInfo = self.add(txn)
         return merkleInfo
 
-    # TODO: Why is this async?
-    async def get(self, identifier: str, reqId: int):
+    def get(self, **kwargs):
         for value in self._transactionLog.iterator(includeKey=False):
             data = self.leafSerializer.deserialize(value)
-            if data.get("identifier") == identifier \
-                    and data.get("reqId") == reqId:
+            if set(kwargs.values()) == {data.get(k) for k in kwargs.keys()}:
                 return data
 
     def getBySeqNo(self, seqNo):
