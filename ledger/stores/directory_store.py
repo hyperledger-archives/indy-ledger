@@ -38,6 +38,11 @@ class DirectoryStore:
         with open(self.keyFilePath(key), "w") as f:
             f.write(value)
 
+    def appendToValue(self, key: str, value: str):
+        with open(self.keyFilePath(key), mode="a+") as f:
+            f.write(value)
+            f.write(os.linesep)
+
     def iterator(self):
         path = Path(self.dbPath)
         return [(file.name, file.open().read()) for file in path.iterdir()]
