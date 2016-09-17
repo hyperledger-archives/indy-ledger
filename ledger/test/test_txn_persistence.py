@@ -1,6 +1,7 @@
 import asyncio
 import time
 from collections import OrderedDict, namedtuple
+from ledger.util import F
 from tempfile import TemporaryDirectory
 
 from ledger.ledger import Ledger
@@ -37,6 +38,7 @@ def testTxnPersistence():
             ldb.append(reply.result)
             txn_in_db = ldb.get(identifier=identifier,
                                 reqId=reply.result['reqId'])
+            txn_in_db.pop(F.seqNo.name)
             assert txn_in_db == reply.result
             assert ldb.size == sizeBeforeInsert + 1
             ldb.reset()
