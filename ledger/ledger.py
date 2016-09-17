@@ -45,7 +45,8 @@ class Ledger(ImmutableStore):
                 logging.debug("Recovering tree from transaction log")
                 self.recoverTreeFromTxnLog()
             else:
-                logging.debug("Recovering tree from hash store")
+                logging.debug("Recovering tree from hash store of size {}".
+                              format(self.tree.hashStore.leafCount))
                 self.recoverTreeFromHashStore()
         else:
             logging.error("Do not know how to recover {}".format(self.tree))
@@ -89,9 +90,11 @@ class Ledger(ImmutableStore):
         return merkleInfo
 
     def get(self, **kwargs):
-        for value in self._transactionLog.iterator(includeKey=False):
+        for seqNo, value in self._transactionLog.iterator():
             data = self.leafSerializer.deserialize(value)
+            # If `kwargs` is a subset of `data`
             if set(kwargs.values()) == {data.get(k) for k in kwargs.keys()}:
+                data[F.seqNo.name] = int(seqNo)
                 return data
 
     def getBySeqNo(self, seqNo):
@@ -116,6 +119,14 @@ class Ledger(ImmutableStore):
     @property
     def root_hash(self) -> str:
         return base64.b64encode(self.tree.root_hash).decode()
+
+    def merkleInfo(self, seqNo):
+        rootHash = self.tree.merkle_tree_hash(0, int(seqNo))
+        auditPath = self.tree.inclusion_proof(0, int(seqNo))
+        return {
+            F.rootHash.name: base64.b64encode(rootHash).decode(),
+            F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
+        }
 
     def start(self, loop=None):
         if self._transactionLog and not self._transactionLog.closed:
