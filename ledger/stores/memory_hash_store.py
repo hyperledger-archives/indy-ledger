@@ -29,3 +29,7 @@ class MemoryHashStore(HashStore):
     @property
     def leafCount(self) -> int:
         return len(self._leafs)
+
+    @property
+    def nodeCount(self) -> int:
+        return len(self._nodes)
