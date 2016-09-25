@@ -98,15 +98,20 @@ def testRecoverLedgerFromHashStore(tempdir):
     assert restartedLedger.tree.hashes == updatedTree.hashes
     assert restartedLedger.tree.root_hash == updatedTree.root_hash
 
-def testConsistencyVerificationOnSturtup(tempdir):
+def testConsistencyVerificationOnSturtupCase1(tempdir):
+    '''
+    One more node was added to nodes file
+    '''
     fhs = FileHashStore(tempdir)
     tree = CompactMerkleTree(hashStore=fhs)
     ledger = Ledger(tree=tree, dataDir=tempdir)
-    for d in range(10):
+    tranzNum = 10
+    for d in range(tranzNum):
         ledger.add(str(d).encode())
     ledger.stop()
 
-    badNode=(None, None, 'X'*32)
+    # Writing one more node without adding of it to leaf and transaction logs
+    badNode = (None, None, ('X' * 32))
     fhs.writeNode(badNode)
 
     with pytest.raises(ConsistencyVerificationFailed):
@@ -115,4 +120,27 @@ def testConsistencyVerificationOnSturtup(tempdir):
         ledger.recoverTreeFromHashStore()
     ledger.stop()
 
+def testConsistencyVerificationOnSturtupCase2(tempdir):
+    '''
+    One more transaction added to transactions file
+    '''
+    fhs = FileHashStore(tempdir)
+    tree = CompactMerkleTree(hashStore=fhs)
+    ledger = Ledger(tree=tree, dataDir=tempdir)
+    tranzNum = 10
+    for d in range(tranzNum):
+        ledger.add(str(d).encode())
 
+    # Adding one more entry to transaction log without adding it to merkle tree
+    badData = 'X' * 32
+    value = ledger.leafSerializer.serialize(badData, toBytes=False)
+    key = str(tranzNum + 1)
+    ledger._transactionLog.put(key=key, value=value)
+
+    ledger.stop()
+
+    with pytest.raises(ConsistencyVerificationFailed):
+        tree = CompactMerkleTree(hashStore=fhs)
+        ledger = NoTransactionRecoveryLedger(tree=tree, dataDir=tempdir)
+        ledger.recoverTreeFromHashStore()
+    ledger.stop()
