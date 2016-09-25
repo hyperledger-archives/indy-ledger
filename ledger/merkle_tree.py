@@ -63,6 +63,6 @@ class MerkleTree:
         """
 
     @abstractmethod
-    def verifyConsistency(self) -> bool:
+    def verifyConsistency(self, expectedLeafCount) -> bool:
         """
         """
