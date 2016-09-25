@@ -39,14 +39,16 @@ class Ledger(ImmutableStore):
         if isinstance(self.tree, CompactMerkleTree):
             # TODO: Should probably have 2 classes of hash store, persistent
             # and non persistent
+
+            # TODO: this should be done it in a more generic way:
             if not self.tree.hashStore \
                     or isinstance(self.tree.hashStore, MemoryHashStore) \
-                    or self.tree.hashStore.leafCount == 0:
+                    or self.tree.leafCount == 0:
                 logging.debug("Recovering tree from transaction log")
                 self.recoverTreeFromTxnLog()
             else:
                 logging.debug("Recovering tree from hash store of size {}".
-                              format(self.tree.hashStore.leafCount))
+                              format(self.tree.leafCount))
                 self.recoverTreeFromHashStore()
         else:
             logging.error("Do not know how to recover {}".format(self.tree))
@@ -57,11 +59,12 @@ class Ledger(ImmutableStore):
             self._addToTree(record)
 
     def recoverTreeFromHashStore(self):
-        treeSize = self.tree.hashStore.leafCount
+        treeSize = self.tree.leafCount
         self.seqNo = treeSize
         hashes = list(reversed(self.tree.inclusion_proof(
             treeSize, treeSize + 1)))
-        self.tree._update(self.tree.hashStore.leafCount, hashes)
+        # TODO: this should be done it in a more generic way:
+        self.tree._update(self.tree.leafCount, hashes)
 
     def add(self, leaf):
         leafData = self._addToTree(leaf)
