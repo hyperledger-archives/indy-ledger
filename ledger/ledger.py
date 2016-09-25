@@ -11,7 +11,7 @@ from ledger.stores.file_store import FileStore
 from ledger.stores.text_file_store import TextFileStore
 from ledger.immutable_store import ImmutableStore
 from ledger.util import F
-
+from ledger.util import ConsistencyVerificationFailed
 
 class Ledger(ImmutableStore):
     def __init__(self, tree: MerkleTree, dataDir: str,
@@ -36,22 +36,29 @@ class Ledger(ImmutableStore):
         self.recoverTree()
 
     def recoverTree(self):
-        if isinstance(self.tree, CompactMerkleTree):
-            # TODO: Should probably have 2 classes of hash store, persistent
-            # and non persistent
+        # TODO: Should probably have 2 classes of hash store,
+        # persistent and non persistent
 
-            # TODO: this should be done it in a more generic way:
-            if not self.tree.hashStore \
-                    or isinstance(self.tree.hashStore, MemoryHashStore) \
-                    or self.tree.leafCount == 0:
-                logging.debug("Recovering tree from transaction log")
-                self.recoverTreeFromTxnLog()
-            else:
+        # TODO: this definitely should be done it in a more generic way:
+        if not isinstance(self.tree, CompactMerkleTree):
+            logging.error("Do not know how to recover {}".format(self.tree))
+
+        if not self.tree.hashStore \
+                or isinstance(self.tree.hashStore, MemoryHashStore) \
+                or self.tree.leafCount == 0:
+            logging.debug("Recovering tree from transaction log")
+            self.recoverTreeFromTxnLog()
+        else:
+            try:
                 logging.debug("Recovering tree from hash store of size {}".
                               format(self.tree.leafCount))
                 self.recoverTreeFromHashStore()
-        else:
-            logging.error("Do not know how to recover {}".format(self.tree))
+            except ConsistencyVerificationFailed:
+                logging.error("Consistency verification of merkle tree "
+                              "from hash store failed, "
+                              "falling back to transaction log")
+                self.recoverTreeFromTxnLog()
+
 
     def recoverTreeFromTxnLog(self):
         for key, entry in self._transactionLog.iterator():
@@ -59,12 +66,15 @@ class Ledger(ImmutableStore):
             self._addToTree(record)
 
     def recoverTreeFromHashStore(self):
+        # To avoid out of memory reading this file not fully
+        numOfTransations = sum((1 for _ in self._transactionLog.iterator()))
+
         treeSize = self.tree.leafCount
         self.seqNo = treeSize
-        hashes = list(reversed(self.tree.inclusion_proof(
-            treeSize, treeSize + 1)))
-        # TODO: this should be done it in a more generic way:
+        hashes = list(reversed(self.tree.inclusion_proof(treeSize, treeSize + 1)))
         self.tree._update(self.tree.leafCount, hashes)
+
+        self.tree.verifyConsistency(numOfTransations)
 
     def add(self, leaf):
         leafData = self._addToTree(leaf)
