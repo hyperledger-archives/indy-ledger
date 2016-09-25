@@ -91,6 +91,10 @@ class FileHashStore(HashStore):
     def leafCount(self) -> int:
         return self.leavesFile.dbFile.seek(0,2) // self.leafSize
 
+    @property
+    def nodeCount(self) -> int:
+        return self.nodesFile.dbFile.seek(0, 2) // self.nodeSize
+
     def close(self):
         self.nodesFile.close()
         self.leavesFile.close()
