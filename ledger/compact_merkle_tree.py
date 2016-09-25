@@ -210,8 +210,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
                 self._subproof(first, 0, second, True)]
 
     def inclusion_proof(self, start, end):
-        return [self.merkle_tree_hash(a, b) for a, b in
-                self._path(start, 0, end)]
+        return [self.merkle_tree_hash(a, b) for a, b in self._path(start, 0, end)]
 
     def _subproof(self, m, start_n: int, end_n: int, b: int):
         n = end_n - start_n
@@ -252,3 +251,11 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
             'tree_size': seq,
             'sha256_root_hash': self.merkle_tree_hash(0, seq) if seq else None,
         }
+
+    @property
+    def leafCount(self) -> int:
+        return self.hashStore.leafCount
+
+    @property
+    def nodeCount(self) -> int:
+        return self.hashStore.nodeCount
