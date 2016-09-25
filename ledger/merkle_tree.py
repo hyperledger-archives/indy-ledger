@@ -61,3 +61,8 @@ class MerkleTree:
     def nodeCount(self) -> int:
         """
         """
+
+    @abstractmethod
+    def verifyConsistency(self) -> bool:
+        """
+        """
