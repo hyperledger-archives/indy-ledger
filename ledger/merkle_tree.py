@@ -51,3 +51,13 @@ class MerkleTree:
     def tree_size(self) -> int:
         """
         """
+
+    @abstractproperty
+    def leafCount(self) -> int:
+        """
+        """
+
+    @abstractproperty
+    def nodeCount(self) -> int:
+        """
+        """
