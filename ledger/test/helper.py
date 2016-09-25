@@ -1,5 +1,5 @@
 from ledger.util import STH
-
+from ledger.ledger import Ledger
 
 def checkLeafInclusion(verifier, leafData, leafIndex, proof, treeHead):
     assert verifier.verify_leaf_inclusion(
@@ -26,3 +26,6 @@ def checkConsistency(tree, verifier):
                                                 old_root=oldroot,
                                                 new_root=newroot,
                                                 proof=proof)
+class NoTransactionRecoveryLedger(Ledger):
+    def recoverTreeFromTxnLog(self):
+        pass

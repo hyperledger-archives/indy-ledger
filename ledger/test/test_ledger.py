@@ -8,6 +8,8 @@ from ledger.serializers.json_serializer import JsonSerializer
 from ledger.serializers.compact_serializer import CompactSerializer
 from ledger.compact_merkle_tree import CompactMerkleTree
 from ledger.stores.file_hash_store import FileHashStore
+from ledger.test.helper import NoTransactionRecoveryLedger
+from ledger.util import ConsistencyVerificationFailed
 
 
 def b64e(s):
@@ -95,3 +97,22 @@ def testRecoverLedgerFromHashStore(tempdir):
     assert restartedLedger.root_hash == ledger.root_hash
     assert restartedLedger.tree.hashes == updatedTree.hashes
     assert restartedLedger.tree.root_hash == updatedTree.root_hash
+
+def testConsistencyVerificationOnSturtup(tempdir):
+    fhs = FileHashStore(tempdir)
+    tree = CompactMerkleTree(hashStore=fhs)
+    ledger = Ledger(tree=tree, dataDir=tempdir)
+    for d in range(10):
+        ledger.add(str(d).encode())
+    ledger.stop()
+
+    badNode=(None, None, 'X'*32)
+    fhs.writeNode(badNode)
+
+    with pytest.raises(ConsistencyVerificationFailed):
+        tree = CompactMerkleTree(hashStore=fhs)
+        ledger = NoTransactionRecoveryLedger(tree=tree, dataDir=tempdir)
+        ledger.recoverTreeFromHashStore()
+    ledger.stop()
+
+
