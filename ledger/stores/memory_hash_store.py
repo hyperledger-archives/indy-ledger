@@ -5,8 +5,7 @@ from ledger.stores.hash_store import HashStore
 # should be changed here too
 class MemoryHashStore(HashStore):
     def __init__(self):
-        self._nodes = []
-        self._leafs = []
+        self.reset()
 
     def writeLeaf(self, leafHash):
         self._leafs.append(leafHash)
@@ -33,3 +32,7 @@ class MemoryHashStore(HashStore):
     @property
     def nodeCount(self) -> int:
         return len(self._nodes)
+
+    def reset(self):
+        self._nodes = []
+        self._leafs = []
