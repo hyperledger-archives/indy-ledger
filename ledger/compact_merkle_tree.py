@@ -263,16 +263,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
     def verifyConsistency(self, expectedLeafCount = -1) -> bool:
         if expectedLeafCount > 0 and expectedLeafCount != self.leafCount:
             raise ConsistencyVerificationFailed()
-        expectedNodeCount = self._approximateNodeNum(self.leafCount)
+        expectedNodeCount = count_bits_set(self.leafCount)
         if not expectedNodeCount == self.nodeCount:
             raise ConsistencyVerificationFailed()
         return True
-
-    def _approximateNodeNum(self, leafNum):
-        import math
-        acc = 0
-        i = leafNum
-        while not i < 1:
-            acc += i % 2
-            i = math.trunc(i / 2)
-        return leafNum - acc
