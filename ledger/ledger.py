@@ -39,25 +39,32 @@ class Ledger(ImmutableStore):
         # TODO: Should probably have 2 classes of hash store,
         # persistent and non persistent
 
-        # TODO: this definitely should be done it in a more generic way:
+        # TODO: this definitely should be done in a more generic way:
         if not isinstance(self.tree, CompactMerkleTree):
             logging.error("Do not know how to recover {}".format(self.tree))
 
-        if not self.tree.hashStore \
-                or isinstance(self.tree.hashStore, MemoryHashStore) \
-                or self.tree.leafCount == 0:
-            logging.debug("Recovering tree from transaction log")
-            self.recoverTreeFromTxnLog()
-        else:
-            try:
-                logging.debug("Recovering tree from hash store of size {}".
-                              format(self.tree.leafCount))
-                self.recoverTreeFromHashStore()
-            except ConsistencyVerificationFailed:
-                logging.error("Consistency verification of merkle tree "
-                              "from hash store failed, "
-                              "falling back to transaction log")
-                self.recoverTreeFromTxnLog()
+        # ATTENTION!
+        # This functionality is disabled until better consistency verification
+        # implemented - always using recovery from transaction log
+
+        # if not self.tree.hashStore \
+        #         or isinstance(self.tree.hashStore, MemoryHashStore) \
+        #         or self.tree.leafCount == 0:
+        #     logging.debug("Recovering tree from transaction log")
+        #     self.recoverTreeFromTxnLog()
+        # else:
+        #     try:
+        #         logging.debug("Recovering tree from hash store of size {}".
+        #                       format(self.tree.leafCount))
+        #         self.recoverTreeFromHashStore()
+        #     except ConsistencyVerificationFailed:
+        #         logging.error("Consistency verification of merkle tree "
+        #                       "from hash store failed, "
+        #                       "falling back to transaction log")
+        #         self.recoverTreeFromTxnLog()
+
+        logging.debug("Recovering tree from transaction log")
+        self.recoverTreeFromTxnLog()
 
 
     def recoverTreeFromTxnLog(self):
