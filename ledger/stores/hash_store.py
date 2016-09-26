@@ -136,7 +136,7 @@ class HashStore:
         return self.readNode(pos)
 
     @abstractmethod
-    def truncate(self) -> bool:
+    def reset(self) -> bool:
         """
         Removes all data from hash store
 
