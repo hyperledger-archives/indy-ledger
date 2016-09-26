@@ -102,3 +102,4 @@ class FileHashStore(HashStore):
     def reset(self):
         self.nodesFile.reset()
         self.leavesFile.reset()
+        return True

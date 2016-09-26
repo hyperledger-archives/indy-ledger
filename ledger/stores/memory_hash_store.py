@@ -36,3 +36,4 @@ class MemoryHashStore(HashStore):
     def reset(self):
         self._nodes = []
         self._leafs = []
+        return True
