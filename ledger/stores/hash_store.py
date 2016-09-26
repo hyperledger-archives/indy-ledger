@@ -80,6 +80,10 @@ class HashStore:
     def leafCount(self, count: int) -> None:
         pass
 
+    @abstractproperty
+    def nodeCount(self) -> None:
+        pass
+
     @classmethod
     def getNodePosition(cls, start, height=None) -> int:
         """

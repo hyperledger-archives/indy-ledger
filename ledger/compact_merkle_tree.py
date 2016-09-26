@@ -7,7 +7,7 @@ from ledger.stores.hash_store import HashStore
 from ledger.stores.memory_hash_store import MemoryHashStore
 from ledger.tree_hasher import TreeHasher
 from ledger.util import count_bits_set, lowest_bit_set
-
+from ledger.util import ConsistencyVerificationFailed
 
 class CompactMerkleTree(merkle_tree.MerkleTree):
     """Compact representation of a Merkle Tree that permits only extension.
@@ -210,8 +210,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
                 self._subproof(first, 0, second, True)]
 
     def inclusion_proof(self, start, end):
-        return [self.merkle_tree_hash(a, b) for a, b in
-                self._path(start, 0, end)]
+        return [self.merkle_tree_hash(a, b) for a, b in self._path(start, 0, end)]
 
     def _subproof(self, m, start_n: int, end_n: int, b: int):
         n = end_n - start_n
@@ -252,3 +251,19 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
             'tree_size': seq,
             'sha256_root_hash': self.merkle_tree_hash(0, seq) if seq else None,
         }
+
+    @property
+    def leafCount(self) -> int:
+        return self.hashStore.leafCount
+
+    @property
+    def nodeCount(self) -> int:
+        return self.hashStore.nodeCount
+
+    def verifyConsistency(self, expectedLeafCount = -1) -> bool:
+        if expectedLeafCount > 0 and expectedLeafCount != self.leafCount:
+            raise ConsistencyVerificationFailed()
+        expectedNodeCount = count_bits_set(self.leafCount)
+        if not expectedNodeCount == self.nodeCount:
+            raise ConsistencyVerificationFailed()
+        return True

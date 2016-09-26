@@ -8,6 +8,8 @@ from ledger.serializers.json_serializer import JsonSerializer
 from ledger.serializers.compact_serializer import CompactSerializer
 from ledger.compact_merkle_tree import CompactMerkleTree
 from ledger.stores.file_hash_store import FileHashStore
+from ledger.test.helper import NoTransactionRecoveryLedger
+from ledger.util import ConsistencyVerificationFailed
 
 
 def b64e(s):
@@ -95,3 +97,50 @@ def testRecoverLedgerFromHashStore(tempdir):
     assert restartedLedger.root_hash == ledger.root_hash
     assert restartedLedger.tree.hashes == updatedTree.hashes
     assert restartedLedger.tree.root_hash == updatedTree.root_hash
+
+def testConsistencyVerificationOnSturtupCase1(tempdir):
+    '''
+    One more node was added to nodes file
+    '''
+    fhs = FileHashStore(tempdir)
+    tree = CompactMerkleTree(hashStore=fhs)
+    ledger = Ledger(tree=tree, dataDir=tempdir)
+    tranzNum = 10
+    for d in range(tranzNum):
+        ledger.add(str(d).encode())
+    ledger.stop()
+
+    # Writing one more node without adding of it to leaf and transaction logs
+    badNode = (None, None, ('X' * 32))
+    fhs.writeNode(badNode)
+
+    with pytest.raises(ConsistencyVerificationFailed):
+        tree = CompactMerkleTree(hashStore=fhs)
+        ledger = NoTransactionRecoveryLedger(tree=tree, dataDir=tempdir)
+        ledger.recoverTreeFromHashStore()
+    ledger.stop()
+
+def testConsistencyVerificationOnSturtupCase2(tempdir):
+    '''
+    One more transaction added to transactions file
+    '''
+    fhs = FileHashStore(tempdir)
+    tree = CompactMerkleTree(hashStore=fhs)
+    ledger = Ledger(tree=tree, dataDir=tempdir)
+    tranzNum = 10
+    for d in range(tranzNum):
+        ledger.add(str(d).encode())
+
+    # Adding one more entry to transaction log without adding it to merkle tree
+    badData = 'X' * 32
+    value = ledger.leafSerializer.serialize(badData, toBytes=False)
+    key = str(tranzNum + 1)
+    ledger._transactionLog.put(key=key, value=value)
+
+    ledger.stop()
+
+    with pytest.raises(ConsistencyVerificationFailed):
+        tree = CompactMerkleTree(hashStore=fhs)
+        ledger = NoTransactionRecoveryLedger(tree=tree, dataDir=tempdir)
+        ledger.recoverTreeFromHashStore()
+    ledger.stop()
