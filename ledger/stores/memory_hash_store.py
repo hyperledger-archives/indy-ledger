@@ -1,8 +1,6 @@
 from ledger.stores.hash_store import HashStore
 
 
-# TODO: The api has changed for FileHashStore and OrientDBStore and
-# should be changed here too
 class MemoryHashStore(HashStore):
     def __init__(self):
         self.reset()

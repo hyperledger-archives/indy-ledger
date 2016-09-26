@@ -156,10 +156,7 @@ def addTxns(hasherAndTree):
 @pytest.fixture()
 def storeHashes(hasherAndTree, addTxns, hashStore):
     h, m = hasherAndTree
-
-    # mhs = MemoryHashStore()
     mhs = m.hashStore
-
     return mhs
 
 
@@ -279,7 +276,7 @@ def testEfficientHashStore(hasherAndTree, addTxns, storeHashes):
         # end = start - pow(2, height) + 1
         # print("node hash start-end: {}-{}".format(start, end))
         # print("node hash height: {}".format(height))
-        # print("node hash end: {}".format(end))
+        # print("node hash end: {}".format(end)s)
         # _, _, nhByTree = mhs.readNodeByTree(start, height)
         # assert nhByTree == node_hash
 
