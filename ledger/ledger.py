@@ -42,6 +42,9 @@ class Ledger(ImmutableStore):
         # TODO: this definitely should be done in a more generic way:
         if not isinstance(self.tree, CompactMerkleTree):
             logging.error("Do not know how to recover {}".format(self.tree))
+            raise TypeError("Merkle tree type {} is not supported"
+                            .format(type(self.tree)))
+
 
         # ATTENTION!
         # This functionality is disabled until better consistency verification
