@@ -134,3 +134,11 @@ class HashStore:
         """
         pos = self.getNodePosition(start, height)
         return self.readNode(pos)
+
+    @abstractmethod
+    def reset(self) -> bool:
+        """
+        Removes all data from hash store
+
+        :return: True if completed successfully
+        """

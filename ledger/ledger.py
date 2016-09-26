@@ -71,6 +71,7 @@ class Ledger(ImmutableStore):
 
 
     def recoverTreeFromTxnLog(self):
+        self.tree.hashStore.reset()
         for key, entry in self._transactionLog.iterator():
             record = self.leafSerializer.deserialize(entry)
             self._addToTree(record)
