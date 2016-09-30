@@ -48,7 +48,10 @@ class FileStore:
             hexedHash = sha256(value).hexdigest()
             self.dbFile.write(hexedHash)
         self.dbFile.write(self.lineSep)
+
+        # Make sure data get written to the disk
         self.dbFile.flush()
+        os.fsync(self.dbFile.fileno())
 
     def get(self, key):
         for k, v in self.iterator():
@@ -124,6 +127,11 @@ class FileStore:
     # noinspection PyUnresolvedReferences
     def close(self):
         self.dbFile.close()
+
+    # noinspection PyUnresolvedReferences
+    @property
+    def closed(self):
+        return self.dbFile.closed
 
     # noinspection PyUnresolvedReferences
     def reset(self):

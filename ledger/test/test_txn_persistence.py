@@ -1,6 +1,7 @@
 import asyncio
 import time
 from collections import OrderedDict, namedtuple
+from ledger.util import F
 from tempfile import TemporaryDirectory
 
 from ledger.ledger import Ledger
@@ -22,7 +23,8 @@ def testTxnPersistence():
             ])
         ldb = Ledger(CompactMerkleTree(), tdir,
                      serializer=CompactSerializer(fields=fields))
-        async def go():
+
+        def go():
             identifier = "testClientId"
             txnId = "txnId"
             reply = Reply(result={
@@ -33,12 +35,14 @@ def testTxnPersistence():
                 "txnType": "buy"
             })
             sizeBeforeInsert = ldb.size
-            await ldb.append(identifier, reply, txnId)
-            txn_in_db = await ldb.get(identifier, reply.result['reqId'])
+            ldb.append(reply.result)
+            txn_in_db = ldb.get(identifier=identifier,
+                                reqId=reply.result['reqId'])
+            txn_in_db.pop(F.seqNo.name)
             assert txn_in_db == reply.result
             assert ldb.size == sizeBeforeInsert + 1
             ldb.reset()
             ldb.stop()
 
-        loop.run_until_complete(go())
+        go()
         loop.close()

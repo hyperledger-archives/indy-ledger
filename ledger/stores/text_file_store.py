@@ -4,7 +4,8 @@ from ledger.stores.file_store import FileStore
 
 
 class TextFileStore(FileStore):
-    def __init__(self, dbDir, dbName, isLineNoKey: bool=False, storeContentHash: bool=True):
+    def __init__(self, dbDir, dbName, isLineNoKey: bool=False,
+                 storeContentHash: bool=True):
         # This is the separator between key and value
         self.delimiter = "\t"
         self.lineSep = os.linesep
@@ -13,7 +14,7 @@ class TextFileStore(FileStore):
 
     def _initDB(self, dbDir, dbName):
         super()._initDB(dbDir, dbName)
-        self.dbPath = os.path.join(dbDir, dbName)
+        self.dbPath = os.path.join(os.path.expanduser(dbDir), dbName)
         self.dbFile = open(self.dbPath, mode="a+")
 
     def _getLines(self):

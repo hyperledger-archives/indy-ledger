@@ -35,10 +35,10 @@ exec(compile(open(METADATA).read(), METADATA, 'exec'))
 
 
 setup(
-    name='Ledger-dev',
+    name='ledger-dev',
     version=__version__,
     description='Immutable Ledger python library',
-    url='https://github.com/evernym/ledger',
+    url='https://github.com/evernym/ledger-priv',
     author=__author__,
     author_email='dev@evernym.us',
     license=__license__,
