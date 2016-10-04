@@ -27,7 +27,6 @@ class Ledger(ImmutableStore):
         self.tree = tree
         self.leafSerializer = serializer or \
                               JsonSerializer()  # type: MappingSerializer
-        # self.preHashingSerializer = JsonSerializer()
         self.hasher = TreeHasher()
         self._transactionLog = None  # type: FileStore
         self._transactionLogName = fileName or "transactions"
@@ -158,7 +157,8 @@ class Ledger(ImmutableStore):
             logging.debug("Starting ledger...")
             self._transactionLog = TextFileStore(self.dataDir,
                                                  self._transactionLogName,
-                                                 isLineNoKey=True)
+                                                 isLineNoKey=True,
+                                                 storeContentHash=False)
 
     def stop(self):
         self._transactionLog.close()
