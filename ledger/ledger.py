@@ -27,7 +27,6 @@ class Ledger(ImmutableStore):
         self.tree = tree
         self.leafSerializer = serializer or \
                               JsonSerializer()  # type: MappingSerializer
-        # self.preHashingSerializer = JsonSerializer()
         self.hasher = TreeHasher()
         self._transactionLog = None  # type: FileStore
         self._transactionLogName = fileName or "transactions"
@@ -69,7 +68,6 @@ class Ledger(ImmutableStore):
         logging.debug("Recovering tree from transaction log")
         self.recoverTreeFromTxnLog()
 
-
     def recoverTreeFromTxnLog(self):
         self.tree.hashStore.reset()
         for key, entry in self._transactionLog.iterator():
@@ -88,9 +86,9 @@ class Ledger(ImmutableStore):
         self.tree.verifyConsistency(numOfTransations)
 
     def add(self, leaf):
-        leafData = self._addToTree(leaf)
         self._addToStore(leaf)
-        return leafData
+        merkleInfo = self._addToTree(leaf)
+        return merkleInfo
 
     def _addToTree(self, leafData):
         serializedLeafData = self.serializeLeaf(leafData)
@@ -104,7 +102,7 @@ class Ledger(ImmutableStore):
         return merkleInfo
 
     def _addToStore(self, data):
-        key = str(self.seqNo)
+        key = str(self.seqNo + 1)
         self._transactionLog.put(key=key,
                                  value=self.leafSerializer.serialize(
                                      data, toBytes=False))
@@ -159,7 +157,8 @@ class Ledger(ImmutableStore):
             logging.debug("Starting ledger...")
             self._transactionLog = TextFileStore(self.dataDir,
                                                  self._transactionLogName,
-                                                 isLineNoKey=True)
+                                                 isLineNoKey=True,
+                                                 storeContentHash=False)
 
     def stop(self):
         self._transactionLog.close()
