@@ -63,8 +63,8 @@ def testAddTxn(tempdir):
     assert ledger.size == 2
 
     # Check that the data is appended to the immutable store
-    assert txn1 == ledger.getBySeqNo(1)
-    assert txn2 == ledger.getBySeqNo(2)
+    assert txn1 == ledger[1]
+    assert txn2 == ledger[2]
 
 
 """
@@ -98,6 +98,7 @@ def testRecoverLedgerFromHashStore(tempdir):
     assert restartedLedger.tree.hashes == updatedTree.hashes
     assert restartedLedger.tree.root_hash == updatedTree.root_hash
 
+
 def testConsistencyVerificationOnSturtupCase1(tempdir):
     '''
     One more node was added to nodes file
@@ -119,6 +120,7 @@ def testConsistencyVerificationOnSturtupCase1(tempdir):
         ledger = NoTransactionRecoveryLedger(tree=tree, dataDir=tempdir)
         ledger.recoverTreeFromHashStore()
     ledger.stop()
+
 
 def testConsistencyVerificationOnSturtupCase2(tempdir):
     '''

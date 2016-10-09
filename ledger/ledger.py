@@ -13,6 +13,7 @@ from ledger.immutable_store import ImmutableStore
 from ledger.util import F
 from ledger.util import ConsistencyVerificationFailed
 
+
 class Ledger(ImmutableStore):
     def __init__(self, tree: MerkleTree, dataDir: str,
                  serializer: MappingSerializer=None, fileName: str=None):
@@ -127,6 +128,9 @@ class Ledger(ImmutableStore):
         else:
             return value
 
+    def __getitem__(self, seqNo):
+        return self.getBySeqNo(seqNo)
+
     def lastCount(self):
         key = self._transactionLog.lastKey
         return 0 if key is None else int(key)
@@ -137,6 +141,9 @@ class Ledger(ImmutableStore):
     @property
     def size(self) -> int:
         return self.tree.tree_size
+
+    def __len__(self):
+        return self.size
 
     @property
     def root_hash(self) -> str:
