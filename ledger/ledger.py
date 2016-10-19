@@ -1,5 +1,6 @@
 import base64
 import logging
+import time
 
 from ledger.compact_merkle_tree import CompactMerkleTree
 from ledger.stores.memory_hash_store import MemoryHashStore
@@ -27,7 +28,7 @@ class Ledger(ImmutableStore):
         self.dataDir = dataDir
         self.tree = tree
         self.leafSerializer = serializer or \
-                              JsonSerializer()  # type: MappingSerializer
+            JsonSerializer()  # type: MappingSerializer
         self.hasher = TreeHasher()
         self._transactionLog = None  # type: FileStore
         self._transactionLogName = fileName or "transactions"
@@ -67,7 +68,12 @@ class Ledger(ImmutableStore):
         #         self.recoverTreeFromTxnLog()
 
         logging.debug("Recovering tree from transaction log")
+        start = time.perf_counter()
         self.recoverTreeFromTxnLog()
+        end = time.perf_counter()
+        t = end - start
+        logging.debug("Recovered tree from transaction log in {} seconds".
+                      format(t))
 
     def recoverTreeFromTxnLog(self):
         self.tree.hashStore.reset()
@@ -76,15 +82,12 @@ class Ledger(ImmutableStore):
             self._addToTree(record)
 
     def recoverTreeFromHashStore(self):
-        # To avoid out of memory reading this file not fully
-        numOfTransations = sum((1 for _ in self._transactionLog.iterator()))
-
         treeSize = self.tree.leafCount
         self.seqNo = treeSize
-        hashes = list(reversed(self.tree.inclusion_proof(treeSize, treeSize + 1)))
+        hashes = list(reversed(self.tree.inclusion_proof(treeSize,
+                                                         treeSize + 1)))
         self.tree._update(self.tree.leafCount, hashes)
-
-        self.tree.verifyConsistency(numOfTransations)
+        self.tree.verifyConsistency(self._transactionLog.numKeys)
 
     def add(self, leaf):
         self._addToStore(leaf)
