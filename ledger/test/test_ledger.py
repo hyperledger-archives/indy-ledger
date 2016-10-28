@@ -1,4 +1,6 @@
 import base64
+import random
+import string
 from collections import OrderedDict
 from tempfile import TemporaryDirectory
 
@@ -9,7 +11,7 @@ from ledger.serializers.compact_serializer import CompactSerializer
 from ledger.compact_merkle_tree import CompactMerkleTree
 from ledger.stores.file_hash_store import FileHashStore
 from ledger.test.helper import NoTransactionRecoveryLedger
-from ledger.util import ConsistencyVerificationFailed
+from ledger.util import ConsistencyVerificationFailed, F
 
 
 def b64e(s):
@@ -34,17 +36,21 @@ ledgerSerializer = CompactSerializer(orderedFields)
 leafSerializer = JsonSerializer()
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.yield_fixture(scope='function')
 def tempdir():
     with TemporaryDirectory() as tdir:
         yield tdir
 
 
-def testAddTxn(tempdir):
-    ledger = Ledger(CompactMerkleTree(), dataDir=tempdir,
-                    serializer=ledgerSerializer)
+@pytest.fixture(scope="function")
+def ledger(tempdir):
+    ledger = Ledger(CompactMerkleTree(hashStore=FileHashStore(dataDir=tempdir)),
+                    dataDir=tempdir, serializer=ledgerSerializer)
     ledger.reset()
+    return ledger
 
+
+def testAddTxn(tempdir, ledger):
     txn1 = {
         'identifier': 'cli1',
         'reqId': 1,
@@ -65,6 +71,24 @@ def testAddTxn(tempdir):
     # Check that the data is appended to the immutable store
     assert txn1 == ledger[1]
     assert txn2 == ledger[2]
+
+
+def testQueryMerkleInfo(tempdir, ledger):
+    merkleInfo = {}
+    for i in range(100):
+        txn = {
+            'identifier': 'cli' + str(i),
+            'reqId': i+1,
+            'op': ''.join([random.choice(string.printable) for i in range(
+                random.randint(i+1, 100))])
+        }
+        mi = ledger.add(txn)
+        seqNo = mi.pop(F.seqNo.name)
+        assert i+1 == seqNo
+        merkleInfo[seqNo] = mi
+
+    for i in range(100):
+        assert merkleInfo[i+1] == ledger.merkleInfo(i+1)
 
 
 """
@@ -99,7 +123,7 @@ def testRecoverLedgerFromHashStore(tempdir):
     assert restartedLedger.tree.root_hash == updatedTree.root_hash
 
 
-def testConsistencyVerificationOnSturtupCase1(tempdir):
+def testConsistencyVerificationOnStartupCase1(tempdir):
     '''
     One more node was added to nodes file
     '''
@@ -122,7 +146,7 @@ def testConsistencyVerificationOnSturtupCase1(tempdir):
     ledger.stop()
 
 
-def testConsistencyVerificationOnSturtupCase2(tempdir):
+def testConsistencyVerificationOnStartupCase2(tempdir):
     '''
     One more transaction added to transactions file
     '''

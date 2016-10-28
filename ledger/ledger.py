@@ -150,8 +150,10 @@ class Ledger(ImmutableStore):
         return base64.b64encode(self.tree.root_hash).decode()
 
     def merkleInfo(self, seqNo):
-        rootHash = self.tree.merkle_tree_hash(0, int(seqNo))
-        auditPath = self.tree.inclusion_proof(0, int(seqNo))
+        seqNo = int(seqNo)
+        assert seqNo > 0
+        rootHash = self.tree.merkle_tree_hash(0, seqNo)
+        auditPath = self.tree.inclusion_proof(seqNo-1, seqNo)
         return {
             F.rootHash.name: base64.b64encode(rootHash).decode(),
             F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
