@@ -51,7 +51,7 @@ class FileStore:
 
         # Make sure data get written to the disk
         self.dbFile.flush()
-        os.fsync(self.dbFile.fileno())
+        os.fdatasync(self.dbFile.fileno())
 
     def get(self, key):
         for k, v in self.iterator():
