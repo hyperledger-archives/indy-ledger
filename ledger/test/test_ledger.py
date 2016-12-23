@@ -36,10 +36,10 @@ ledgerSerializer = CompactSerializer(orderedFields)
 leafSerializer = JsonSerializer()
 
 
-@pytest.yield_fixture(scope='function')
-def tempdir():
-    with TemporaryDirectory() as tdir:
-        yield tdir
+# @pytest.yield_fixture(scope='function')
+# def tempdir():
+#     with TemporaryDirectory() as tdir:
+#         yield tdir
 
 
 @pytest.fixture(scope="function")
