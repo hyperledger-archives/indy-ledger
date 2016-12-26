@@ -7,7 +7,7 @@ class FileStore:
     A file based implementation of a key value store.
     """
     def __init__(self, dbDir, dbName, isLineNoKey: bool=False,
-                 storeContentHash: bool=True):
+                 storeContentHash: bool=True, ensureDurability: bool=True):
         """
         :param dbDir: The directory where the file storing the data would be
         present
@@ -16,9 +16,14 @@ class FileStore:
         delimiter followed by the value
         :param storeContentHash: Whether to store a hash of the value or not.
         Storing hash can make it really fast to compare the value for equality
+        :param ensureDurability: Should the file be fysnced after every write.
+        This can ensure durability in most of the cases, but make
+        writes extremely slow. See testMeasureWriteTime. For frequent writes,
+        it makes sense to disable flush and fsync on every write
         """
         self.isLineNoKey = isLineNoKey
         self.storeContentHash = storeContentHash
+        self.ensureDurability = ensureDurability
 
     def _prepareDBLocation(self, dbDir, dbName):
         self.dbDir = dbDir
@@ -50,9 +55,14 @@ class FileStore:
         self.dbFile.write(self.lineSep)
 
         # Make sure data get written to the disk
-        self.dbFile.flush()
-        # fsync takes too much time on Windows. This is the reason of test_merkle_proof tests slowness on Windows.
-        os.fsync(self.dbFile.fileno())
+        if self.ensureDurability:
+            # Even flush slows down writes significantly
+            self.dbFile.flush()
+            # fsync takes too much time on Windows.
+            # This is the reason of test_merkle_proof tests slowness on Windows.
+            # Even on Linux using fsync slows down the test by at least 2
+            # orders of magnitude. See testMeasureWriteTime
+            os.fsync(self.dbFile.fileno())
 
     def get(self, key):
         for k, v in self.iterator():

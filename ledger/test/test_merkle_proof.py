@@ -206,7 +206,8 @@ def testCompactMerkleTree2(hasherAndTree, verifier):
 def testCompactMerkleTree(hasherAndTree, verifier):
     h, m = hasherAndTree
     printEvery = 1000
-    for d in range(1000):
+    count = 1000
+    for d in range(count):
         data = str(d + 1).encode()
         data_hex = hexlify(data)
         audit_path = m.append(data)
@@ -229,7 +230,7 @@ def testCompactMerkleTree(hasherAndTree, verifier):
 
     checkConsistency(m, verifier=verifier)
 
-    for d in range(1, 1000):
+    for d in range(1, count):
         verifier.verify_tree_consistency(d, d + 1,
                                          m.merkle_tree_hash(0, d),
                                          m.merkle_tree_hash(0, d + 1),

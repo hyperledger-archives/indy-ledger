@@ -5,14 +5,15 @@ from ledger.stores.file_store import FileStore
 
 class BinaryFileStore(FileStore):
     def __init__(self, dbDir, dbName, isLineNoKey: bool=False,
-                 storeContentHash: bool=True):
+                 storeContentHash: bool=True, ensureDurability: bool=True):
         # This is the separator between key and value
         self.delimiter = b"\t"
         # TODO: This line separator might conflict with some data format.
         # So prefix the value data in the file with size and only read those
         # number of bytes.
         self.lineSep = b'\n\x07\n\x01'
-        super().__init__(dbDir, dbName, isLineNoKey, storeContentHash)
+        super().__init__(dbDir, dbName, isLineNoKey, storeContentHash,
+                         ensureDurability)
         self._initDB(dbDir, dbName)
 
     @staticmethod

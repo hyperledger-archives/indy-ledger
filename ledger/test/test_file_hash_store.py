@@ -24,7 +24,8 @@ def writtenFhs(tempdir, nodes, leaves):
 
 def generateHashes(count=10):
     return [sha256(
-        (choice(string.ascii_letters) * randint(i, 1000)).encode()
+        (choice(string.ascii_letters) * (randint(i, 1000) if i < 1000
+                                         else randint(1000, i))).encode()
     ).digest() for i in range(count)]
 
 
