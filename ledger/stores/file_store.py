@@ -51,7 +51,8 @@ class FileStore:
 
         # Make sure data get written to the disk
         self.dbFile.flush()
-        os.fdatasync(self.dbFile.fileno())
+        # fsync takes too much time on Windows. This is the reason of test_merkle_proof tests slowness on Windows.
+        os.fsync(self.dbFile.fileno())
 
     def get(self, key):
         for k, v in self.iterator():
