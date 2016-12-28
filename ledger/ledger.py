@@ -17,7 +17,8 @@ from ledger.util import ConsistencyVerificationFailed
 
 class Ledger(ImmutableStore):
     def __init__(self, tree: MerkleTree, dataDir: str,
-                 serializer: MappingSerializer=None, fileName: str=None):
+                 serializer: MappingSerializer=None, fileName: str=None,
+                 ensureDurability: bool=True):
         """
         :param tree: an implementation of MerkleTree
         :param dataDir: the directory where the transaction log is stored
@@ -32,7 +33,8 @@ class Ledger(ImmutableStore):
         self.hasher = TreeHasher()
         self._transactionLog = None  # type: FileStore
         self._transactionLogName = fileName or "transactions"
-        self.start()
+        self.ensureDurability = ensureDurability
+        self.start(ensureDurability=ensureDurability)
         self.seqNo = 0
         self.recoverTree()
 
@@ -167,6 +169,7 @@ class Ledger(ImmutableStore):
             logging.debug("Ledger already started.")
         else:
             logging.debug("Starting ledger...")
+            ensureDurability = ensureDurability or self.ensureDurability
             self._transactionLog = TextFileStore(self.dataDir,
                                                  self._transactionLogName,
                                                  isLineNoKey=True,

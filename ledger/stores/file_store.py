@@ -54,10 +54,13 @@ class FileStore:
             self.dbFile.write(hexedHash)
         self.dbFile.write(self.lineSep)
 
+        # A little bit smart strategy like flush every 2 seconds
+        # or every 10 writes or every 1 KB may be a better idea
         # Make sure data get written to the disk
+        # Even flush slows down writes significantly
+        self.dbFile.flush()
+
         if self.ensureDurability:
-            # Even flush slows down writes significantly
-            self.dbFile.flush()
             # fsync takes too much time on Windows.
             # This is the reason of test_merkle_proof tests slowness on Windows.
             # Even on Linux using fsync slows down the test by at least 2
