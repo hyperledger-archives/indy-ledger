@@ -20,8 +20,9 @@ class TextFileStore(FileStore):
         self.dbFile = open(self.dbPath, mode="a+")
 
     def _getLines(self):
-        return (line.strip(self.lineSep) for line in self.dbFile
-                if len(line.strip(self.lineSep)) != 0)
+        lines = self.dbFile
+        stripped = (line.strip(self.lineSep) for line in lines)
+        return (line for line in stripped if len(line) != 0)
 
 
 class ChunkedTextFileStore(ChunkedFileStore):
@@ -41,5 +42,6 @@ class ChunkedTextFileStore(ChunkedFileStore):
         super()._initDB(dbDir, dbName)
 
     def _getLines(self, dbFile):
-        return (line.strip(self.lineSep) for line in dbFile
-                if len(line.strip(self.lineSep)) != 0)
+        lines = dbFile
+        stripped = (line.strip(self.lineSep) for line in lines)
+        return (line for line in stripped if len(line) != 0)
