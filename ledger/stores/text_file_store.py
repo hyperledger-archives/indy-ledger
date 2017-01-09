@@ -1,5 +1,6 @@
 import os
 
+from ledger.stores import store_utils
 from ledger.stores.chunked_file_store import ChunkedFileStore
 from ledger.stores.file_store import FileStore
 
@@ -20,9 +21,7 @@ class TextFileStore(FileStore):
         self.dbFile = open(self.dbPath, mode="a+")
 
     def _getLines(self):
-        lines = self.dbFile
-        stripped = (line.strip(self.lineSep) for line in lines)
-        return (line for line in stripped if len(line) != 0)
+        return store_utils.cleanLines(self.dbFile)
 
 
 class ChunkedTextFileStore(ChunkedFileStore):
@@ -42,6 +41,4 @@ class ChunkedTextFileStore(ChunkedFileStore):
         super()._initDB(dbDir, dbName)
 
     def _getLines(self, dbFile):
-        lines = dbFile
-        stripped = (line.strip(self.lineSep) for line in lines)
-        return (line for line in stripped if len(line) != 0)
+        return store_utils.cleanLines(dbFile)

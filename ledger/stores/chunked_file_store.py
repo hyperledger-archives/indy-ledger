@@ -54,8 +54,13 @@ class ChunkedFileStore(FileStore):
         """
         Determine which file is the latest and return its file name.
         """
-        fileNos = [int(fn) for fn in os.listdir(self.dataDir)]
-        return str(max(fileNos) if fileNos else ChunkedFileStore.firstFileName)
+        last = ChunkedFileStore.\
+            _fileNameToChunkIndex(ChunkedFileStore.firstFileName)
+        for fileName in os.listdir(self.dataDir):
+            index = ChunkedFileStore._fileNameToChunkIndex(fileName)
+            if index is not None and index > last:
+                last = index
+        return str(last)
 
     def _prepareDBLocation(self, dbDir, dbName) -> None:
         self.dbName = dbName
@@ -125,3 +130,11 @@ class ChunkedFileStore(FileStore):
 
     def open(self) -> None:
         self.dbFile = open(self._getLatestFile(), mode="a+")
+
+
+    @staticmethod
+    def _fileNameToChunkIndex(fileName):
+        try:
+            return int(fileName)
+        except:
+            return None
