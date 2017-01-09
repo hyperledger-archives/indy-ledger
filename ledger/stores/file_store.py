@@ -7,7 +7,8 @@ class FileStore:
     A file based implementation of a key value store.
     """
     def __init__(self, dbDir, dbName, isLineNoKey: bool=False,
-                 storeContentHash: bool=True, ensureDurability: bool=True):
+                 storeContentHash: bool=True, ensureDurability: bool=True,
+                 delimiter = "\t", lineSep = "\r\n"):
         """
         :param dbDir: The directory where the file storing the data would be
         present
@@ -20,7 +21,12 @@ class FileStore:
         This can ensure durability in most of the cases, but make
         writes extremely slow. See testMeasureWriteTime. For frequent writes,
         it makes sense to disable flush and fsync on every write
+        :param delimiter: delimiter between key and value
+        :param lineSep: line separator - defaults to \r\n
+
         """
+        self.delimiter = delimiter
+        self.lineSep = lineSep
         self.isLineNoKey = isLineNoKey
         self.storeContentHash = storeContentHash
         self.ensureDurability = ensureDurability

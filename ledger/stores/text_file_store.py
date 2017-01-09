@@ -6,13 +6,15 @@ from ledger.stores.file_store import FileStore
 
 
 class TextFileStore(FileStore):
-    def __init__(self, dbDir, dbName, isLineNoKey: bool=False,
-                 storeContentHash: bool=True, ensureDurability: bool=True):
-        # This is the separator between key and value
-        self.delimiter = "\t"
-        self.lineSep = os.linesep
-        super().__init__(dbDir, dbName, isLineNoKey, storeContentHash,
-                         ensureDurability)
+
+    def __init__(self,
+                 dbDir,
+                 dbName,
+                 isLineNoKey: bool=False,
+                 storeContentHash: bool=True,
+                 ensureDurability: bool=True):
+        super().__init__(dbDir, dbName, isLineNoKey,
+                         storeContentHash, ensureDurability)
         self._initDB(dbDir, dbName)
 
     def _initDB(self, dbDir, dbName):
@@ -25,16 +27,15 @@ class TextFileStore(FileStore):
 
 
 class ChunkedTextFileStore(ChunkedFileStore):
+
     def __init__(self,
                  dbDir,
                  dbName,
                  isLineNoKey: bool=False,
                  storeContentHash: bool=True,
                  chunkSize=1000):
-        ChunkedFileStore.__init__(self, dbDir, dbName, isLineNoKey,
-                                  storeContentHash, chunkSize)
-        self.delimiter = "\t"  # separator between key and value
-        self.lineSep = os.linesep
+        super().__init__(dbDir, dbName, isLineNoKey,
+                         storeContentHash, chunkSize)
         self._initDB(dbDir, dbName)
 
     def _initDB(self, dbDir, dbName):
