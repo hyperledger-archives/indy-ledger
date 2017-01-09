@@ -1,4 +1,7 @@
+import os
+
 from ledger.util import STH
+from ledger.ledger import Ledger
 
 
 def checkLeafInclusion(verifier, leafData, leafIndex, proof, treeHead):
@@ -12,6 +15,7 @@ def checkLeafInclusion(verifier, leafData, leafIndex, proof, treeHead):
 def checkConsistency(tree, verifier):
     vectors = [(1, 2),
                (1, 3),
+               (4, 5),
                (2, 3),
                (3, 8)]
 
@@ -25,3 +29,13 @@ def checkConsistency(tree, verifier):
                                                 old_root=oldroot,
                                                 new_root=newroot,
                                                 proof=proof)
+
+
+def makeTempdir(factory, counter):
+    return os.path.join(factory.getbasetemp().strpath, str(next(counter)))
+
+
+class NoTransactionRecoveryLedger(Ledger):
+    def recoverTreeFromTxnLog(self):
+        pass
+

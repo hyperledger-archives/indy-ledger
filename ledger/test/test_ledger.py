@@ -1,4 +1,6 @@
 import base64
+import random
+import string
 from collections import OrderedDict
 from tempfile import TemporaryDirectory
 
@@ -7,6 +9,9 @@ from ledger.ledger import Ledger
 from ledger.serializers.json_serializer import JsonSerializer
 from ledger.serializers.compact_serializer import CompactSerializer
 from ledger.compact_merkle_tree import CompactMerkleTree
+from ledger.stores.file_hash_store import FileHashStore
+from ledger.test.helper import NoTransactionRecoveryLedger
+from ledger.util import ConsistencyVerificationFailed, F
 
 
 def b64e(s):
@@ -31,17 +36,21 @@ ledgerSerializer = CompactSerializer(orderedFields)
 leafSerializer = JsonSerializer()
 
 
-@pytest.yield_fixture(scope='module')
-def tempdir():
-    with TemporaryDirectory() as tdir:
-        yield tdir
+# @pytest.yield_fixture(scope='function')
+# def tempdir():
+#     with TemporaryDirectory() as tdir:
+#         yield tdir
 
 
-def testAddTxn(tempdir):
-    ledger = Ledger(CompactMerkleTree(), dataDir=tempdir,
-                    serializer=ledgerSerializer)
+@pytest.fixture(scope="function")
+def ledger(tempdir):
+    ledger = Ledger(CompactMerkleTree(hashStore=FileHashStore(dataDir=tempdir)),
+                    dataDir=tempdir, serializer=ledgerSerializer)
     ledger.reset()
+    return ledger
 
+
+def testAddTxn(tempdir, ledger):
     txn1 = {
         'identifier': 'cli1',
         'reqId': 1,
@@ -60,8 +69,26 @@ def testAddTxn(tempdir):
     assert ledger.size == 2
 
     # Check that the data is appended to the immutable store
-    assert txn1 == ledger.getBySeqNo(1)
-    assert txn2 == ledger.getBySeqNo(2)
+    assert txn1 == ledger[1]
+    assert txn2 == ledger[2]
+
+
+def testQueryMerkleInfo(tempdir, ledger):
+    merkleInfo = {}
+    for i in range(100):
+        txn = {
+            'identifier': 'cli' + str(i),
+            'reqId': i+1,
+            'op': ''.join([random.choice(string.printable) for i in range(
+                random.randint(i+1, 100))])
+        }
+        mi = ledger.add(txn)
+        seqNo = mi.pop(F.seqNo.name)
+        assert i+1 == seqNo
+        merkleInfo[seqNo] = mi
+
+    for i in range(100):
+        assert merkleInfo[i+1] == ledger.merkleInfo(i+1)
 
 
 """
@@ -77,3 +104,69 @@ def testRecoverMerkleTreeFromLedger(tempdir):
     assert ledger2.tree.root_hash is not None
     ledger2.reset()
     ledger2.stop()
+
+
+def testRecoverLedgerFromHashStore(tempdir):
+    fhs = FileHashStore(tempdir)
+    tree = CompactMerkleTree(hashStore=fhs)
+    ledger = Ledger(tree=tree, dataDir=tempdir)
+    for d in range(10):
+        ledger.add(str(d).encode())
+    updatedTree = ledger.tree
+    ledger.stop()
+
+    tree = CompactMerkleTree(hashStore=fhs)
+    restartedLedger = Ledger(tree=tree, dataDir=tempdir)
+    assert restartedLedger.size == ledger.size
+    assert restartedLedger.root_hash == ledger.root_hash
+    assert restartedLedger.tree.hashes == updatedTree.hashes
+    assert restartedLedger.tree.root_hash == updatedTree.root_hash
+
+
+def testConsistencyVerificationOnStartupCase1(tempdir):
+    '''
+    One more node was added to nodes file
+    '''
+    fhs = FileHashStore(tempdir)
+    tree = CompactMerkleTree(hashStore=fhs)
+    ledger = Ledger(tree=tree, dataDir=tempdir)
+    tranzNum = 10
+    for d in range(tranzNum):
+        ledger.add(str(d).encode())
+    ledger.stop()
+
+    # Writing one more node without adding of it to leaf and transaction logs
+    badNode = (None, None, ('X' * 32))
+    fhs.writeNode(badNode)
+
+    with pytest.raises(ConsistencyVerificationFailed):
+        tree = CompactMerkleTree(hashStore=fhs)
+        ledger = NoTransactionRecoveryLedger(tree=tree, dataDir=tempdir)
+        ledger.recoverTreeFromHashStore()
+    ledger.stop()
+
+
+def testConsistencyVerificationOnStartupCase2(tempdir):
+    '''
+    One more transaction added to transactions file
+    '''
+    fhs = FileHashStore(tempdir)
+    tree = CompactMerkleTree(hashStore=fhs)
+    ledger = Ledger(tree=tree, dataDir=tempdir)
+    tranzNum = 10
+    for d in range(tranzNum):
+        ledger.add(str(d).encode())
+
+    # Adding one more entry to transaction log without adding it to merkle tree
+    badData = 'X' * 32
+    value = ledger.leafSerializer.serialize(badData, toBytes=False)
+    key = str(tranzNum + 1)
+    ledger._transactionLog.put(key=key, value=value)
+
+    ledger.stop()
+
+    with pytest.raises(ConsistencyVerificationFailed):
+        tree = CompactMerkleTree(hashStore=fhs)
+        ledger = NoTransactionRecoveryLedger(tree=tree, dataDir=tempdir)
+        ledger.recoverTreeFromHashStore()
+    ledger.stop()

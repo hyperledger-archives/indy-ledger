@@ -4,9 +4,10 @@ from typing import List, Tuple, Sequence
 
 import ledger.merkle_tree as merkle_tree
 from ledger.stores.hash_store import HashStore
+from ledger.stores.memory_hash_store import MemoryHashStore
 from ledger.tree_hasher import TreeHasher
 from ledger.util import count_bits_set, lowest_bit_set
-
+from ledger.util import ConsistencyVerificationFailed
 
 class CompactMerkleTree(merkle_tree.MerkleTree):
     """Compact representation of a Merkle Tree that permits only extension.
@@ -22,7 +23,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
 
         # These two queues should be written to two simple position-accessible
         # arrays (files, database tables, etc.)
-        self.hashStore = hashStore  # type: HashStore
+        self.hashStore = hashStore or MemoryHashStore()  # type: HashStore
         self.__hasher = hasher
         self._update(tree_size, hashes)
 
@@ -50,8 +51,8 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
 
         The object must have attributes tree_size:int and hashes:list.
         """
-        other.tree_size = self.__tree_size
-        other.hashes[:] = self.__hashes
+        other.__tree_size = self.__tree_size
+        other.__hashes = self.__hashes
 
     def __copy__(self):
         return self.__class__(self.__hasher, self.__tree_size, self.__hashes)
@@ -146,8 +147,9 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
             return [(next_hash, subtree_h)] + self.__push_subtree_hash(
                 subtree_h + 1, next_hash)
 
-    def append(self, new_leaf: bytes):
-        """Append a new leaf onto the end of this tree and return the audit path"""
+    def append(self, new_leaf: bytes) -> List[bytes]:
+        """Append a new leaf onto the end of this tree and return the
+        audit path"""
         auditPath = list(reversed(self.__hashes))
         self._push_subtree([new_leaf])
         return auditPath
@@ -199,7 +201,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
         for h in leafs:
             hashes.append(self.hashStore.readLeaf(h))
         for h in nodes:
-            hashes.append(self.hashStore.readNode(h)[2])
+            hashes.append(self.hashStore.readNode(h))
         foldedHash = self.__hasher._hash_fold(hashes[::-1])
         return foldedHash
 
@@ -208,8 +210,7 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
                 self._subproof(first, 0, second, True)]
 
     def inclusion_proof(self, start, end):
-        return [self.merkle_tree_hash(a, b) for a, b in
-                self._path(start, 0, end)]
+        return [self.merkle_tree_hash(a, b) for a, b in self._path(start, 0, end)]
 
     def _subproof(self, m, start_n: int, end_n: int, b: int):
         n = end_n - start_n
@@ -250,3 +251,19 @@ class CompactMerkleTree(merkle_tree.MerkleTree):
             'tree_size': seq,
             'sha256_root_hash': self.merkle_tree_hash(0, seq) if seq else None,
         }
+
+    @property
+    def leafCount(self) -> int:
+        return self.hashStore.leafCount
+
+    @property
+    def nodeCount(self) -> int:
+        return self.hashStore.nodeCount
+
+    def verifyConsistency(self, expectedLeafCount = -1) -> bool:
+        if expectedLeafCount > 0 and expectedLeafCount != self.leafCount:
+            raise ConsistencyVerificationFailed()
+        expectedNodeCount = count_bits_set(self.leafCount)
+        if not expectedNodeCount == self.nodeCount:
+            raise ConsistencyVerificationFailed()
+        return True

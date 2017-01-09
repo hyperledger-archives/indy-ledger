@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, abstractproperty
 
 from ledger.util import count_bits_set
 from ledger.util import highest_bit_set
@@ -71,6 +71,19 @@ class HashStore:
         """
         pass
 
+    @abstractproperty
+    def leafCount(self) -> int:
+        pass
+
+    @leafCount.setter
+    @abstractmethod
+    def leafCount(self, count: int) -> None:
+        pass
+
+    @abstractproperty
+    def nodeCount(self) -> None:
+        pass
+
     @classmethod
     def getNodePosition(cls, start, height=None) -> int:
         """
@@ -121,3 +134,11 @@ class HashStore:
         """
         pos = self.getNodePosition(start, height)
         return self.readNode(pos)
+
+    @abstractmethod
+    def reset(self) -> bool:
+        """
+        Removes all data from hash store
+
+        :return: True if completed successfully
+        """

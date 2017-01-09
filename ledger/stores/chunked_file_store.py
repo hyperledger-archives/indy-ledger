@@ -14,8 +14,11 @@ from typing import List
 
 from ledger.stores.file_store import FileStore
 
-
 class ChunkedFileStore(FileStore):
+    # TODO: This should not extends file store but have several file stores,
+    # one for each chunk. It should take an argument to whether each chunk is
+    # binary or text, either all chunks are `BinaryFileStore`s or
+    # `TextFileStore`s
 
     firstFileName = '1'
 
@@ -24,8 +27,10 @@ class ChunkedFileStore(FileStore):
                  dbName,
                  isLineNoKey: bool=False,
                  storeContentHash: bool=True,
-                 chunkSize=1000):
-        FileStore.__init__(self, dbDir, dbName, isLineNoKey, storeContentHash)
+                 chunkSize: int=1000,
+                 ensureDurability: bool=True):
+        FileStore.__init__(self, dbDir, dbName, isLineNoKey, storeContentHash,
+                           ensureDurability)
         self.chunkSize = chunkSize
         self.lineNum = 1
         self.dbFile = None
@@ -102,16 +107,21 @@ class ChunkedFileStore(FileStore):
         self._resetDbFile()
 
     def _getLines(self, dbFile) -> List[str]:
-        raise NotImplementedError()
+        # TODO: This needs to be implemented.
+        raise NotImplementedError
 
-    def _baseIterator(self, prefix, returnKey: bool, returnValue: bool, dbFile: str=None):
+    def _baseIterator(self, prefix, returnKey: bool, returnValue: bool,
+                      dbFile: str=None):
         if dbFile:
             with open(dbFile, 'r') as fil:
-                yield from super()._baseIterator(prefix, returnKey, returnValue, fil)
+                yield from super()._baseIterator(self._getLines(fil), prefix,
+                                                 returnKey, returnValue)
         else:
             for fil in os.listdir(self.dataDir):
                 with open(os.path.join(self.dataDir, fil), 'r') as dbFile:
-                    yield from super()._baseIterator(prefix, returnKey, returnValue, dbFile)
+                    yield from super()._baseIterator(self._getLines(dbFile),
+                                                     prefix, returnKey,
+                                                     returnValue)
 
     def open(self) -> None:
         self.dbFile = open(self._getLatestFile(), mode="a+")

@@ -10,8 +10,9 @@ from ledger.serializers.mapping_serializer import MappingSerializer
 
 class OrderedJsonEncoder(json.JSONEncoder):
     def __init__(self, *args, **kwargs):
-        kwargs["ensure_ascii"] = False
-        kwargs["sort_keys"] = True
+        kwargs['ensure_ascii'] = False
+        kwargs['sort_keys'] = True
+        kwargs['separators'] = (',', ':')
         super().__init__(*args, **kwargs)
 
     def encode(self, o):
@@ -28,12 +29,16 @@ class JsonSerializer(MappingSerializer):
     """
     jsonEncoder = OrderedJsonEncoder()
 
+    # The `fields` argument is kept to conform to the interface, its not
+    # need in this method
     def serialize(self, data: Dict, fields=None, toBytes=True):
         encoded = self.jsonEncoder.encode(data)
         if toBytes:
             encoded = encoded.encode()
         return encoded
 
+    # The `fields` argument is kept to conform to the interface, its not
+    # need in this method
     def deserialize(self, data, fields=None):
         if isinstance(data, (bytes, bytearray)):
             data = data.decode()

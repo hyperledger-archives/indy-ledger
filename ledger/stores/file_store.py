@@ -6,12 +6,8 @@ class FileStore:
     """
     A file based implementation of a key value store.
     """
-
-    def __init__(self,
-                 dbDir,
-                 dbName,
-                 isLineNoKey: bool=False,
-                 storeContentHash: bool=True):
+    def __init__(self, dbDir, dbName, isLineNoKey: bool=False,
+                 storeContentHash: bool=True, ensureDurability: bool=True):
         """
         :param dbDir: The directory where the file storing the data would be
         present
@@ -20,9 +16,14 @@ class FileStore:
         delimiter followed by the value
         :param storeContentHash: Whether to store a hash of the value or not.
         Storing hash can make it really fast to compare the value for equality
+        :param ensureDurability: Should the file be fysnced after every write.
+        This can ensure durability in most of the cases, but make
+        writes extremely slow. See testMeasureWriteTime. For frequent writes,
+        it makes sense to disable flush and fsync on every write
         """
         self.isLineNoKey = isLineNoKey
         self.storeContentHash = storeContentHash
+        self.ensureDurability = ensureDurability
 
     def _prepareDBLocation(self, dbDir, dbName):
         self.dbDir = dbDir
@@ -52,45 +53,36 @@ class FileStore:
             hexedHash = sha256(value).hexdigest()
             self.dbFile.write(hexedHash)
         self.dbFile.write(self.lineSep)
+
+        # A little bit smart strategy like flush every 2 seconds
+        # or every 10 writes or every 1 KB may be a better idea
+        # Make sure data get written to the disk
+        # Even flush slows down writes significantly
         self.dbFile.flush()
+
+        if self.ensureDurability:
+            # fsync takes too much time on Windows.
+            # This is the reason of test_merkle_proof tests slowness on Windows.
+            # Even on Linux using fsync slows down the test by at least 2
+            # orders of magnitude. See testMeasureWriteTime
+            os.fsync(self.dbFile.fileno())
 
     def get(self, key):
         for k, v in self.iterator():
             if k == key:
                 return v
 
-    # noinspection PyUnresolvedReferences
-    def iterator(self,
-                 includeKey=True,
-                 includeValue=True,
-                 prefix=None,
-                 dbFile=None):
-        if not (includeKey or includeValue):
-            raise ValueError("At least one of includeKey or includeValue "
-                             "should be true")
-        if includeKey and includeValue:
-            return self._keyValueIterator(prefix, dbFile)
-        elif includeValue:
-            return self._valueIterator(prefix, dbFile)
-        else:
-            return self._keyIterator(prefix, dbFile)
+    def _keyIterator(self, lines, prefix=None):
+        return self._baseIterator(lines, prefix, True, False)
 
-    def _keyIterator(self, prefix=None, dbFile=None):
-        return self._baseIterator(prefix, True, False, dbFile)
+    def _valueIterator(self, lines, prefix=None):
+        return self._baseIterator(lines, prefix, False, True)
 
-    def _valueIterator(self, prefix=None, dbFile=None):
-        return self._baseIterator(prefix, False, True, dbFile)
-
-    def _keyValueIterator(self, prefix=None, dbFile=None):
-        return self._baseIterator(prefix, True, True, dbFile)
+    def _keyValueIterator(self, lines, prefix=None):
+        return self._baseIterator(lines, prefix, True, True)
 
     # noinspection PyUnresolvedReferences
-    def _baseIterator(self, prefix, returnKey: bool, returnValue: bool, dbFile: str=None):
-        # Move to the beginning of file
-        dbFile = dbFile or self.dbFile
-        dbFile.seek(0)
-        lines = self._getLines(dbFile)
-
+    def _baseIterator(self, lines, prefix, returnKey: bool, returnValue: bool):
         i = 1
         for line in lines:
             if self.isLineNoKey:
@@ -112,8 +104,24 @@ class FileStore:
                 elif returnValue:
                     yield value
 
-    def _getLines(self, dbFile):
+    def _getLines(self):
         raise NotImplementedError()
+
+    # noinspection PyUnresolvedReferences
+    def iterator(self, includeKey=True, includeValue=True, prefix=None):
+        if not (includeKey or includeValue):
+            raise ValueError("At least one of includeKey or includeValue "
+                             "should be true")
+        # Move to the beginning of file
+        self.dbFile.seek(0)
+
+        lines = self._getLines()
+        if includeKey and includeValue:
+            return self._keyValueIterator(lines, prefix=prefix)
+        elif includeValue:
+            return self._valueIterator(lines, prefix=prefix)
+        else:
+            return self._keyIterator(lines, prefix=prefix)
 
     @property
     def lastKey(self):
@@ -133,6 +141,11 @@ class FileStore:
     # noinspection PyUnresolvedReferences
     def close(self):
         self.dbFile.close()
+
+    # noinspection PyUnresolvedReferences
+    @property
+    def closed(self):
+        return self.dbFile.closed
 
     # noinspection PyUnresolvedReferences
     def reset(self):
