@@ -1,6 +1,7 @@
 import base64
 import logging
 import time
+from collections import OrderedDict
 
 from ledger.compact_merkle_tree import CompactMerkleTree
 from ledger.stores.memory_hash_store import MemoryHashStore
@@ -183,7 +184,7 @@ class Ledger(ImmutableStore):
         self._transactionLog.reset()
 
     def getAllTxn(self, frm: int=None, to: int=None):
-        result = {}
+        result = OrderedDict()
         for seqNo, txn in self._transactionLog.iterator():
             seqNo = int(seqNo)
             if (frm is None or seqNo >= frm) and \
