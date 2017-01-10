@@ -1,136 +1,23 @@
-"""
-Stores chunks of data into separate files. The chunking of data is
-determined by the `chunkSize` parameter. Each chunk of data is written to a
-different file.
-The naming convention of the files is such that the starting number of each
-chunk is the file name, i.e. for a chunkSize of 1000, the first file would be
-1, the second 1001 etc.
-Every instance of ChunkedFileStore maintains its own directory for
-storing the chunked data files.
-"""
-
 import os
 from typing import List
-
 from ledger.stores.file_store import FileStore
+from ledger.stores.text_file_store import TextFileStore
+
 
 class ChunkedFileStore(FileStore):
-    # TODO: This should not extends file store but have several file stores,
-    # one for each chunk. It should take an argument to whether each chunk is
-    # binary or text, either all chunks are `BinaryFileStore`s or
-    # `TextFileStore`s
+    """
+    Implements a FileStore with chunking behavior.
+    Stores chunks of data into separate files. The chunking of data is
+    determined by the `chunkSize` parameter. Each chunk of data is written to a
+    different file.
+    The naming convention of the files is such that the starting number of each
+    chunk is the file name, i.e. for a chunkSize of 1000, the first file would be
+    1, the second 1001 etc.
+    Every instance of ChunkedFileStore maintains its own directory for
+    storing the chunked data files.
+    """
 
-    firstFileName = '1'
-
-    def __init__(self,
-                 dbDir,
-                 dbName,
-                 isLineNoKey: bool=False,
-                 storeContentHash: bool=True,
-                 chunkSize: int=1000,
-                 ensureDurability: bool=True):
-        FileStore.__init__(self, dbDir, dbName, isLineNoKey, storeContentHash,
-                           ensureDurability)
-        self.chunkSize = chunkSize
-        self.lineNum = 1
-        self.dbFile = None
-        # This directory stores the data written into multiple files.
-        self.dataDir = os.path.join(dbDir, dbName)
-
-    def _initDB(self, dataDir, dbName) -> None:
-        self._prepareDBLocation(dataDir, dbName)
-        self._resetDbFile()
-
-    def _resetDbFile(self) -> None:
-        """
-        Open the most recent file in append mode
-        """
-        self.dbFile = open(self._getLatestFile(), mode="a+")
-
-    def _getLatestFile(self) -> str:
-        return os.path.join(self.dataDir, self._findLatestFile())
-
-    def _findLatestFile(self) -> str:
-        """
-        Determine which file is the latest and return its file name.
-        """
-        last = ChunkedFileStore.\
-            _fileNameToChunkIndex(ChunkedFileStore.firstFileName)
-        for fileName in os.listdir(self.dataDir):
-            index = ChunkedFileStore._fileNameToChunkIndex(fileName)
-            if index is not None and index > last:
-                last = index
-        return str(last)
-
-    def _prepareDBLocation(self, dbDir, dbName) -> None:
-        self.dbName = dbName
-        if not os.path.exists(self.dataDir):
-            os.makedirs(self.dataDir)
-
-    def _createNewDbFile(self) -> None:
-        """
-        Create a new file to write the next chunk of data into.
-        """
-        self.dbFile.close()
-        currentChunk = int(self.dbFile.name.split(os.path.sep)[-1])
-        nextChunk = currentChunk + self.chunkSize
-        self.dbFile = open(
-            os.path.join(self.dataDir, str(nextChunk)),
-            mode="a+")
-
-    def put(self, value, key=None) -> None:
-        """
-        Adds a chunking behavior to FileStore's put method.
-        Writes to a new file when a chunk is filled.
-        """
-        if self.lineNum > self.chunkSize:
-            self._createNewDbFile()
-            self.lineNum = 1
-        self.lineNum += 1
-        super(ChunkedFileStore, self).put(value, key)
-
-    def get(self, key) -> str:
-        """
-        Determines the file to retrieve the data from and retrieves the data.
-        """
-        remainder = int(key) % self.chunkSize
-        addend = int(ChunkedFileStore.firstFileName)
-        fileNo = int(key) - remainder + addend if remainder \
-            else key - self.chunkSize + addend
-        keyToCompare = str(self.chunkSize if not remainder else remainder)
-        chunkedFile = os.path.join(self.dataDir, str(fileNo))
-        for k, v in self.iterator(dbFile=chunkedFile):
-            if k == keyToCompare:
-                return v
-
-    def reset(self) -> None:
-        """
-        Clear all data in file storage.
-        """
-        for f in os.listdir(self.dataDir):
-            os.remove(os.path.join(self.dataDir, f))
-        self._resetDbFile()
-
-    def _getLines(self, dbFile) -> List[str]:
-        # TODO: This needs to be implemented.
-        raise NotImplementedError
-
-    def _baseIterator(self, prefix, returnKey: bool, returnValue: bool,
-                      dbFile: str=None):
-        if dbFile:
-            with open(dbFile, 'r') as fil:
-                yield from super()._baseIterator(self._getLines(fil), prefix,
-                                                 returnKey, returnValue)
-        else:
-            for fil in os.listdir(self.dataDir):
-                with open(os.path.join(self.dataDir, fil), 'r') as dbFile:
-                    yield from super()._baseIterator(self._getLines(dbFile),
-                                                     prefix, returnKey,
-                                                     returnValue)
-
-    def open(self) -> None:
-        self.dbFile = open(self._getLatestFile(), mode="a+")
-
+    firstChunkIndex = 1
 
     @staticmethod
     def _fileNameToChunkIndex(fileName):
@@ -138,3 +25,180 @@ class ChunkedFileStore(FileStore):
             return int(fileName)
         except:
             return None
+
+    @staticmethod
+    def _chunkIndexToFileName(index):
+        return str(index)
+
+    def __init__(self,
+                 dbDir,
+                 dbName,
+                 isLineNoKey: bool=False,
+                 storeContentHash: bool=True,
+                 chunkSize: int=1000,
+                 ensureDurability: bool=True,
+                 chunkStoreConstructor = TextFileStore):
+        """
+        :param chunkStoreConstructor: constructor of store for single chunk
+        """
+
+        FileStore.__init__(self,
+                           dbDir,
+                           dbName,
+                           isLineNoKey,
+                           storeContentHash,
+                           ensureDurability)
+
+        self.chunkSize = chunkSize
+        self.itemNum = 1  # chunk size counter
+        self.dataDir = os.path.join(dbDir, dbName)  # chunk files destination
+        self.currentChunk = None  # type: FileStore
+        self.currentChunkIndex = None  # type: int
+
+        self._chunkCreator = lambda name: \
+            chunkStoreConstructor(self.dataDir,
+                                  name,
+                                  isLineNoKey,
+                                  storeContentHash,
+                                  ensureDurability)
+
+        self._initDB(self.dataDir, dbName)
+
+    def _initDB(self, dataDir, dbName) -> None:
+        self._prepareDBLocation(dataDir, dbName)
+        self._useLatestChunk()
+
+    def _useLatestChunk(self) -> None:
+        """
+        Moves chunk cursor to the last chunk
+        """
+        self._useChunk(self._findLatestChunk())
+
+    def _findLatestChunk(self) -> str:
+        """
+        Determine which chunk is the latest
+        :return: index of a last chunk
+        """
+        chunks = self._listChunks()
+        if len(chunks) > 0:
+            return chunks[-1]
+        return ChunkedFileStore.firstChunkIndex
+
+    def _prepareDBLocation(self, dbDir, dbName) -> None:
+        self.dbName = dbName
+        if not os.path.exists(self.dataDir):
+            os.makedirs(self.dataDir)
+
+    def _startNextChunk(self) -> None:
+        """
+        Close current and start next chunk
+        """
+        if self.currentChunk is None:
+            self._useLatestChunk()
+        else:
+            self._useChunk(self.currentChunkIndex + self.chunkSize)
+
+    def _useChunk(self, index) -> None:
+        """
+        Switch to specific chunk
+
+        :param index:
+        """
+
+        if self.currentChunk is not None:
+            self.currentChunk.close()
+        self.currentChunk = self._openChunk(index)
+        self.currentChunkIndex = index
+        self.itemNum = self.currentChunk.numKeys + 1
+
+    def _openChunk(self, index) -> FileStore:
+        """
+        Load chunk from file
+
+        :param index: chunk index
+        :return: opened chunk
+        """
+        return self._chunkCreator(ChunkedFileStore._chunkIndexToFileName(index))
+
+    def put(self, value, key=None) -> None:
+        if self.itemNum > self.chunkSize:
+            self._startNextChunk()
+            self.itemNum = 1
+        self.itemNum += 1
+        self.currentChunk.put(value, key)
+
+    def get(self, key) -> str:
+        """
+        Determines the file to retrieve the data from and retrieves the data.
+        """
+        remainder = int(key) % self.chunkSize
+        addend = ChunkedFileStore.firstChunkIndex
+        fileNo = int(key) - remainder + addend if remainder \
+            else key - self.chunkSize + addend
+        keyToCompare = str(self.chunkSize if not remainder else remainder)
+        return self._openChunk(fileNo).get(keyToCompare)
+
+    def reset(self) -> None:
+        """
+        Clear all data in file storage.
+        """
+        self.close()
+        for f in os.listdir(self.dataDir):
+            os.remove(os.path.join(self.dataDir, f))
+        self._useLatestChunk()
+
+    def _getLines(self) -> List[str]:
+        '''
+        Lists lines in a store (all chunks)
+        :return: lines
+        '''
+
+        # TODO: shouldn't this return iterator over iterators
+        # instead of string list?
+
+        allLines = []
+        chunkIndices = self._listChunks()
+        for chunkIndex in chunkIndices:
+            chunk = self._openChunk(chunkIndex)
+            # implies that getLines is logically protected, not private
+            allLines.extend(chunk._getLines())
+        return allLines
+
+    def open(self) -> None:
+        self._useLatestChunk()
+
+    def close(self):
+        if self.currentChunk is not None:
+            self.currentChunk.close()
+        self.currentChunk = None
+        self.currentChunkIndex = None
+        self.itemNum = None
+
+    def _listChunks(self):
+        """
+        Lists store chunks
+
+        :return: sorted list of available chunk indices
+        """
+        chunks = []
+        for fileName in os.listdir(self.dataDir):
+            index = ChunkedFileStore._fileNameToChunkIndex(fileName)
+            if index is not None:
+                chunks.append(index)
+        return sorted(chunks)
+
+    def iterator(self, includeKey=True, includeValue=True, prefix=None):
+        if not (includeKey or includeValue):
+            raise ValueError("At least one of includeKey or includeValue "
+                             "should be true")
+        lines = self._getLines()
+        if includeKey and includeValue:
+            return self._keyValueIterator(lines, prefix=prefix)
+        elif includeValue:
+            return self._valueIterator(lines, prefix=prefix)
+        else:
+            return self._keyIterator(lines, prefix=prefix)
+
+    @property
+    def closed(self):
+        return self.currentChunk is None
