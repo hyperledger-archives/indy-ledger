@@ -6,7 +6,6 @@ from ledger.stores.chunked_file_store import ChunkedFileStore
 from ledger.stores.text_file_store import TextFileStore
 
 
-
 def countLines(fname) -> int:
     with open(fname) as f:
         return sum(1 for _ in f)
