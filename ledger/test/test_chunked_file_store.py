@@ -2,7 +2,9 @@ import os
 import random
 import pytest
 
-from ledger.stores.text_file_store import ChunkedTextFileStore
+from ledger.stores.chunked_file_store import ChunkedFileStore
+from ledger.stores.text_file_store import TextFileStore
+
 
 
 def countLines(fname) -> int:
@@ -11,7 +13,7 @@ def countLines(fname) -> int:
 
 
 def getValue(key) -> str:
-    return str(key) + ' Some data'
+    return str(key) + " Some data"
 
 
 chunkSize = 2
@@ -19,15 +21,16 @@ dataSize = 100
 
 
 @pytest.fixture(scope="module")
-def chunkedTextFileStore() -> ChunkedTextFileStore:
-    return ChunkedTextFileStore('/tmp', 'chunked_data', True, True, chunkSize)
+def chunkedTextFileStore() -> ChunkedFileStore:
+    return ChunkedFileStore("/tmp", "chunked_data", True, True, chunkSize,
+                            chunkStoreConstructor=TextFileStore)
 
 
 @pytest.fixture(scope="module")
-def populatedChunkedFileStore(chunkedTextFileStore) -> ChunkedTextFileStore:
+def populatedChunkedFileStore(chunkedTextFileStore) -> ChunkedFileStore:
     store = chunkedTextFileStore
     store.reset()
-    dirPath = '/tmp/chunked_data'
+    dirPath = "/tmp/chunked_data"
     for i in range(1, dataSize + 1):
         store.put(getValue(i), str(i))
     assert len(os.listdir(dirPath)) == dataSize / chunkSize
