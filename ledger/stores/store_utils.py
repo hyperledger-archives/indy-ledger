@@ -8,4 +8,4 @@ def cleanLines(source, lineSep = os.linesep):
     :return: list of non empty lines with removed separators
     """
     stripped = (line.strip(lineSep) for line in source)
-    return (line for line in stripped if len(line) != 0)
+    return [line for line in stripped if len(line) != 0]
