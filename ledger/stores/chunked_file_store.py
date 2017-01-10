@@ -148,10 +148,10 @@ class ChunkedFileStore(FileStore):
         self._useLatestChunk()
 
     def _getLines(self) -> List[str]:
-        '''
+        """
         Lists lines in a store (all chunks)
         :return: lines
-        '''
+        """
 
         # TODO: shouldn't this return iterator over iterators
         # instead of string list?
@@ -162,6 +162,7 @@ class ChunkedFileStore(FileStore):
             chunk = self._openChunk(chunkIndex)
             # implies that getLines is logically protected, not private
             allLines.extend(chunk._getLines())
+            chunk.close()
         return allLines
 
     def open(self) -> None:
