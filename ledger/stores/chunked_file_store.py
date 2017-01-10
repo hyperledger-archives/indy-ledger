@@ -7,12 +7,14 @@ from ledger.stores.text_file_store import TextFileStore
 class ChunkedFileStore(FileStore):
     """
     Implements a FileStore with chunking behavior.
+
     Stores chunks of data into separate files. The chunking of data is
     determined by the `chunkSize` parameter. Each chunk of data is written to a
     different file.
     The naming convention of the files is such that the starting number of each
-    chunk is the file name, i.e. for a chunkSize of 1000, the first file would be
-    1, the second 1001 etc.
+    chunk is the file name, i.e. for a chunkSize of 1000, the first file would
+    be 1, the second 1001 etc.
+
     Every instance of ChunkedFileStore maintains its own directory for
     storing the chunked data files.
     """
@@ -41,6 +43,8 @@ class ChunkedFileStore(FileStore):
         """
         :param chunkStoreConstructor: constructor of store for single chunk
         """
+
+        assert chunkStoreConstructor is not None
 
         FileStore.__init__(self,
                            dbDir,
@@ -130,6 +134,8 @@ class ChunkedFileStore(FileStore):
     def get(self, key) -> str:
         """
         Determines the file to retrieve the data from and retrieves the data.
+
+        :return: value corresponding to specified key
         """
         remainder = int(key) % self.chunkSize
         addend = ChunkedFileStore.firstChunkIndex
@@ -150,11 +156,9 @@ class ChunkedFileStore(FileStore):
     def _getLines(self) -> List[str]:
         """
         Lists lines in a store (all chunks)
+
         :return: lines
         """
-
-        # TODO: shouldn't this return iterator over iterators
-        # instead of string list?
 
         allLines = []
         chunkIndices = self._listChunks()
@@ -189,6 +193,12 @@ class ChunkedFileStore(FileStore):
         return sorted(chunks)
 
     def iterator(self, includeKey=True, includeValue=True, prefix=None):
+        """
+        Store iterator
+
+        :return: Iterator for data in all chunks
+        """
+
         if not (includeKey or includeValue):
             raise ValueError("At least one of includeKey or includeValue "
                              "should be true")
