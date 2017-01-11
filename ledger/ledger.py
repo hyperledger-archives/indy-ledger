@@ -185,12 +185,13 @@ class Ledger(ImmutableStore):
             logging.debug("Ledger already started.")
         else:
             logging.debug("Starting ledger...")
+
             self._transactionLog = \
-                self._customTransactionLogStore \
-                    if self._customTransactionLogStore is not None \
-                    else Ledger._defaultStore(self.dataDir,
-                                              self._transactionLogName,
-                                              self.ensureDurability)
+                self._customTransactionLogStore or \
+                Ledger._defaultStore(self.dataDir,
+                                     self._transactionLogName,
+                                     self.ensureDurability)
+
 
     def stop(self):
         self._transactionLog.close()
