@@ -23,4 +23,4 @@ class TextFileStore(FileStore):
 
     def _getLines(self):
         self.dbFile.seek(0)
-        return store_utils.cleanLines(self.dbFile)
+        return list(store_utils.cleanLines(self.dbFile))
