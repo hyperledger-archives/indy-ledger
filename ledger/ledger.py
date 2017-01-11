@@ -4,22 +4,33 @@ import time
 from collections import OrderedDict
 
 from ledger.compact_merkle_tree import CompactMerkleTree
-from ledger.stores.memory_hash_store import MemoryHashStore
 from ledger.tree_hasher import TreeHasher
 from ledger.merkle_tree import MerkleTree
 from ledger.serializers.mapping_serializer import MappingSerializer
 from ledger.serializers.json_serializer import JsonSerializer
 from ledger.stores.file_store import FileStore
-from ledger.stores.chunked_file_store import ChunkedFileStore
+from ledger.stores.text_file_store import TextFileStore
 from ledger.immutable_store import ImmutableStore
 from ledger.util import F
-from ledger.util import ConsistencyVerificationFailed
 
 
 class Ledger(ImmutableStore):
-    def __init__(self, tree: MerkleTree, dataDir: str,
-                 serializer: MappingSerializer=None, fileName: str=None,
-                 ensureDurability: bool=True):
+
+    @staticmethod
+    def _defaultStore(dataDir, logName, ensureDurability) -> FileStore:
+        return TextFileStore(dataDir,
+                                logName,
+                                isLineNoKey=True,
+                                storeContentHash=False,
+                                ensureDurability=ensureDurability)
+
+    def __init__(self,
+                 tree: MerkleTree,
+                 dataDir: str,
+                 serializer: MappingSerializer=None,
+                 fileName: str=None,
+                 ensureDurability: bool=True,
+                 transactionLogStore: FileStore = None):
         """
         :param tree: an implementation of MerkleTree
         :param dataDir: the directory where the transaction log is stored
@@ -35,7 +46,8 @@ class Ledger(ImmutableStore):
         self._transactionLog = None  # type: FileStore
         self._transactionLogName = fileName or "transactions"
         self.ensureDurability = ensureDurability
-        self.start(ensureDurability=ensureDurability)
+        self._customTransactionLogStore = transactionLogStore
+        self.start()
         self.seqNo = 0
         self.recoverTree()
 
@@ -79,6 +91,9 @@ class Ledger(ImmutableStore):
                       format(t))
 
     def recoverTreeFromTxnLog(self):
+        # TODO: in this and some other lines specific fields of
+        # CompactMerkleTree are used, but type of self.tree is MerkleTree
+        # This must be fixed!
         self.tree.hashStore.reset()
         for key, entry in self._transactionLog.iterator():
             record = self.leafSerializer.deserialize(entry)
@@ -165,16 +180,17 @@ class Ledger(ImmutableStore):
             F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
         }
 
-    def start(self, loop=None, ensureDurability=True):
+    def start(self, loop=None):
         if self._transactionLog and not self._transactionLog.closed:
             logging.debug("Ledger already started.")
         else:
             logging.debug("Starting ledger...")
-            self._transactionLog = ChunkedFileStore(self.dataDir,
-                                                 self._transactionLogName,
-                                                 isLineNoKey=True,
-                                                 storeContentHash=False,
-                                                 ensureDurability=ensureDurability)
+            self._transactionLog = \
+                self._customTransactionLogStore \
+                    if self._customTransactionLogStore is not None \
+                    else Ledger._defaultStore(self.dataDir,
+                                              self._transactionLogName,
+                                              self.ensureDurability)
 
     def stop(self):
         self._transactionLog.close()
