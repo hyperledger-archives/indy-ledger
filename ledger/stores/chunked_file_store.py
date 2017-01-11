@@ -78,7 +78,7 @@ class ChunkedFileStore(FileStore):
         """
         self._useChunk(self._findLatestChunk())
 
-    def _findLatestChunk(self) -> str:
+    def _findLatestChunk(self) -> int:
         """
         Determine which chunk is the latest
         :return: index of a last chunk
