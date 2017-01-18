@@ -1,6 +1,7 @@
 import base64
 import logging
 import time
+from collections import OrderedDict
 
 from ledger.compact_merkle_tree import CompactMerkleTree
 from ledger.stores.memory_hash_store import MemoryHashStore
@@ -17,7 +18,8 @@ from ledger.util import ConsistencyVerificationFailed
 
 class Ledger(ImmutableStore):
     def __init__(self, tree: MerkleTree, dataDir: str,
-                 serializer: MappingSerializer=None, fileName: str=None):
+                 serializer: MappingSerializer=None, fileName: str=None,
+                 ensureDurability: bool=True):
         """
         :param tree: an implementation of MerkleTree
         :param dataDir: the directory where the transaction log is stored
@@ -32,7 +34,8 @@ class Ledger(ImmutableStore):
         self.hasher = TreeHasher()
         self._transactionLog = None  # type: FileStore
         self._transactionLogName = fileName or "transactions"
-        self.start()
+        self.ensureDurability = ensureDurability
+        self.start(ensureDurability=ensureDurability)
         self.seqNo = 0
         self.recoverTree()
 
@@ -162,15 +165,17 @@ class Ledger(ImmutableStore):
             F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
         }
 
-    def start(self, loop=None):
+    def start(self, loop=None, ensureDurability=True):
         if self._transactionLog and not self._transactionLog.closed:
             logging.debug("Ledger already started.")
         else:
             logging.debug("Starting ledger...")
+            ensureDurability = ensureDurability or self.ensureDurability
             self._transactionLog = TextFileStore(self.dataDir,
                                                  self._transactionLogName,
                                                  isLineNoKey=True,
-                                                 storeContentHash=False)
+                                                 storeContentHash=False,
+                                                 ensureDurability=ensureDurability)
 
     def stop(self):
         self._transactionLog.close()
@@ -179,7 +184,7 @@ class Ledger(ImmutableStore):
         self._transactionLog.reset()
 
     def getAllTxn(self, frm: int=None, to: int=None):
-        result = {}
+        result = OrderedDict()
         for seqNo, txn in self._transactionLog.iterator():
             seqNo = int(seqNo)
             if (frm is None or seqNo >= frm) and \

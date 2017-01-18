@@ -11,7 +11,7 @@ from ledger.stores.hash_store import HashStore
 from ledger.tree_hasher import TreeHasher
 from ledger.stores.memory_hash_store import MemoryHashStore
 from ledger.stores.file_hash_store import FileHashStore
-from ledger.test.helper import checkConsistency
+from ledger.test.helper import checkConsistency, makeTempdir
 from ledger.util import STH
 
 """
@@ -110,12 +110,17 @@ hexlify(c(
 """
 
 
+@pytest.fixture(scope='module')
+def tempdir(tmpdir_factory, counter):
+    return makeTempdir(tmpdir_factory, counter)
+
+
 @pytest.yield_fixture(scope="module", params=['File', 'Memory'])
-def hashStore(request):
+def hashStore(request, tempdir):
     if request.param == 'File':
-        with TemporaryDirectory() as tempdir:
-            fhs = FileHashStore(tempdir)
-            yield fhs
+        # with TemporaryDirectory() as tempdir:
+        fhs = FileHashStore(tempdir)
+        yield fhs
     elif request.param == 'Memory':
         yield MemoryHashStore()
 
@@ -201,7 +206,8 @@ def testCompactMerkleTree2(hasherAndTree, verifier):
 def testCompactMerkleTree(hasherAndTree, verifier):
     h, m = hasherAndTree
     printEvery = 1000
-    for d in range(1000):
+    count = 1000
+    for d in range(count):
         data = str(d + 1).encode()
         data_hex = hexlify(data)
         audit_path = m.append(data)
@@ -224,7 +230,7 @@ def testCompactMerkleTree(hasherAndTree, verifier):
 
     checkConsistency(m, verifier=verifier)
 
-    for d in range(1, 1000):
+    for d in range(1, count):
         verifier.verify_tree_consistency(d, d + 1,
                                          m.merkle_tree_hash(0, d),
                                          m.merkle_tree_hash(0, d + 1),
