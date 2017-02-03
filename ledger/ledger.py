@@ -180,18 +180,17 @@ class Ledger(ImmutableStore):
             F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
         }
 
-    def start(self, loop=None):
+    def start(self, loop=None, ensureDurability=True):
         if self._transactionLog and not self._transactionLog.closed:
             logging.debug("Ledger already started.")
         else:
             logging.debug("Starting ledger...")
-
+            ensureDurability = ensureDurability or self.ensureDurability
             self._transactionLog = \
                 self._customTransactionLogStore or \
                 Ledger._defaultStore(self.dataDir,
                                      self._transactionLogName,
-                                     self.ensureDurability)
-
+                                     ensureDurability)
 
     def stop(self):
         self._transactionLog.close()
