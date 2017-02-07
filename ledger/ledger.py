@@ -145,7 +145,9 @@ class Ledger(ImmutableStore):
         key = str(seqNo)
         value = self._transactionLog.get(key)
         if value:
-            return self.leafSerializer.deserialize(value)
+            data = self.leafSerializer.deserialize(value)
+            data[F.seqNo.name] = int(seqNo)
+            return data
         else:
             return value
 
