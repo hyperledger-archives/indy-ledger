@@ -118,8 +118,8 @@ class Ledger(ImmutableStore):
         self.seqNo += 1
         merkleInfo = {
             F.seqNo.name: self.seqNo,
-            F.rootHash.name: base64.b64encode(self.tree.root_hash).decode(),
-            F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
+            F.rootHash.name: self.hashToStr(self.tree.root_hash),
+            F.auditPath.name: [self.hashToStr(h) for h in auditPath]
         }
         return merkleInfo
 
@@ -130,8 +130,7 @@ class Ledger(ImmutableStore):
                                      data, toBytes=False))
 
     def append(self, txn):
-        merkleInfo = self.add(txn)
-        return merkleInfo
+        return self.add(txn)
 
     def get(self, **kwargs):
         for seqNo, value in self._transactionLog.iterator():
@@ -170,7 +169,7 @@ class Ledger(ImmutableStore):
 
     @property
     def root_hash(self) -> str:
-        return base64.b64encode(self.tree.root_hash).decode()
+        return self.hashToStr(self.tree.root_hash)
 
     def merkleInfo(self, seqNo):
         seqNo = int(seqNo)
@@ -178,8 +177,8 @@ class Ledger(ImmutableStore):
         rootHash = self.tree.merkle_tree_hash(0, seqNo)
         auditPath = self.tree.inclusion_proof(seqNo-1, seqNo)
         return {
-            F.rootHash.name: base64.b64encode(rootHash).decode(),
-            F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
+            F.rootHash.name: self.hashToStr(rootHash),
+            F.auditPath.name: [self.hashToStr(h) for h in auditPath]
         }
 
     def start(self, loop=None, ensureDurability=True):
@@ -210,3 +209,7 @@ class Ledger(ImmutableStore):
             if to is not None and seqNo > to:
                 break
         return result
+
+    @staticmethod
+    def hashToStr(h):
+        return base64.b64encode(h).decode()
