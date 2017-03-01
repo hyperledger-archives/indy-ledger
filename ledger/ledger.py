@@ -195,11 +195,14 @@ class Ledger(ImmutableStore):
 
     def appendNewLineIfReq(self):
         import os
+        import getpass
         lineSep = os.linesep.encode()
         lineSepLength = len(lineSep)
         try:
             filePath = os.path.join(self.dataDir, self._transactionLogName)
             logging.debug("new line check for file: {}".format(filePath))
+            logging.debug("current user when appending new line: {}".
+                          format(getpass.getuser()))
             with open(filePath, 'a+b') as f:
                 size = f.tell()
                 if size > 0:
