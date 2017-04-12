@@ -135,6 +135,14 @@ class HashStore:
         pos = self.getNodePosition(start, height)
         return self.readNode(pos)
 
+    @staticmethod
+    def _validatePos(start, end=None):
+        if end:
+            assert start < end, "start index must be less than end index"
+        if start < 1:
+            raise IndexError(
+                "seqNo starts from 1, index requested: {}".format(start))
+        
     @abstractmethod
     def reset(self) -> bool:
         """
