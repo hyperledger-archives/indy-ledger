@@ -182,6 +182,7 @@ class Ledger(ImmutableStore):
         }
 
     def start(self, loop=None, ensureDurability=True):
+        self.appendNewLineIfReq()
         if self._transactionLog and not self._transactionLog.closed:
             logging.debug("Ledger already started.")
         else:
@@ -213,3 +214,22 @@ class Ledger(ImmutableStore):
     @staticmethod
     def hashToStr(h):
         return base64.b64encode(h).decode()
+
+    def appendNewLineIfReq(self):
+        import os
+        import getpass
+        lineSep = os.linesep.encode()
+        lineSepLength = len(lineSep)
+        try:
+            filePath = os.path.join(self.dataDir, self._transactionLogName)
+            logging.debug("new line check for file: {}".format(filePath))
+            logging.debug("current user when appending new line: {}".
+                          format(getpass.getuser()))
+            with open(filePath, 'a+b') as f:
+                size = f.tell()
+                if size > 0:
+                    f.seek(-lineSepLength, 2)  # last character in file
+                    if f.read() != lineSep:
+                        f.write(lineSep)
+        except FileNotFoundError:
+            pass
