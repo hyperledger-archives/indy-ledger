@@ -11,6 +11,9 @@ try:
     import ujson as json
     from ujson import encode as uencode
 
+    # Older versions of ujson's encode do not support `sort_keys`, if that
+    # is the case default to using json
+    uencode({'xx': '123', 'aa': 90}, sort_keys=True)
 
     class UJsonEncoder:
         @staticmethod
@@ -22,8 +25,9 @@ try:
 
 
     JsonEncoder = UJsonEncoder()
+    print('Using ujson for json encoding and decoding')
 
-except ImportError:
+except (ImportError, TypeError):
     import json
 
     class OrderedJsonEncoder(json.JSONEncoder):
