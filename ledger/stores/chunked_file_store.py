@@ -181,7 +181,7 @@ class ChunkedFileStore(FileStore):
 
     def _listChunks(self):
         """
-        Lists store chunks
+        Lists stored chunks
 
         :return: sorted list of available chunk indices
         """

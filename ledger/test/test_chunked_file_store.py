@@ -25,7 +25,7 @@ def chunkedTextFileStore() -> ChunkedFileStore:
                             chunkStoreConstructor=TextFileStore)
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="module")
 def populatedChunkedFileStore(chunkedTextFileStore) -> ChunkedFileStore:
     store = chunkedTextFileStore
     store.reset()
@@ -35,8 +35,8 @@ def populatedChunkedFileStore(chunkedTextFileStore) -> ChunkedFileStore:
     assert len(os.listdir(dirPath)) == dataSize / chunkSize
     assert all(countLines(dirPath + os.path.sep + f) == chunkSize
                for f in os.listdir(dirPath))
+    yield store
     store.close()
-    return store
 
 
 def testWriteToNewFileOnceChunkSizeIsReached(populatedChunkedFileStore):
