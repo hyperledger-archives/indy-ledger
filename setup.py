@@ -43,7 +43,7 @@ setup(
     author_email='dev@evernym.us',
     license=__license__,
     keywords='Ledger Merkle',
-    install_requires=['ujson'],
+    install_requires=['ujson==1.33'],
     setup_requires=['pytest-runner', ],
     tests_require=['pytest', ],
     packages=find_packages(exclude=['test', 'test.*',
