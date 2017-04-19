@@ -142,7 +142,15 @@ class HashStore:
         if start < 1:
             raise IndexError(
                 "seqNo starts from 1, index requested: {}".format(start))
-        
+
+    @abstractmethod
+    def close(self):
+        pass
+
+    @abstractproperty
+    def closed(self):
+        pass
+
     @abstractmethod
     def reset(self) -> bool:
         """
@@ -150,3 +158,4 @@ class HashStore:
 
         :return: True if completed successfully
         """
+        pass
