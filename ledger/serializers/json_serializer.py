@@ -25,7 +25,6 @@ try:
 
 
     JsonEncoder = UJsonEncoder()
-    print('Using ujson for json encoding and decoding')
 
 except (ImportError, TypeError):
     import json
