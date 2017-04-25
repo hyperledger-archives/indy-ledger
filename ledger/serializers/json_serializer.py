@@ -51,17 +51,25 @@ class JsonSerializer(MappingSerializer):
     order
     """
 
-    # The `fields` argument is kept to conform to the interface, its not
-    # need in this method
-    def serialize(self, data: Dict, fields=None, toBytes=True):
+    @staticmethod
+    def dumps(data, toBytes=True):
         encoded = JsonEncoder.encode(data)
         if toBytes:
             encoded = encoded.encode()
         return encoded
 
-    # The `fields` argument is kept to conform to the interface, its not
-    # need in this method
-    def deserialize(self, data, fields=None):
+    @staticmethod
+    def loads(data):
         if isinstance(data, (bytes, bytearray)):
             data = data.decode()
         return json.loads(data)
+
+    # The `fields` argument is kept to conform to the interface, its not
+    # need in this method
+    def serialize(self, data: Dict, fields=None, toBytes=True):
+        return self.dumps(data, toBytes)
+
+    # The `fields` argument is kept to conform to the interface, its not
+    # need in this method
+    def deserialize(self, data, fields=None):
+        return self.loads(data)
