@@ -71,7 +71,8 @@ class HashStore:
         """
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def leafCount(self) -> int:
         pass
 
@@ -80,7 +81,8 @@ class HashStore:
     def leafCount(self, count: int) -> None:
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def nodeCount(self) -> None:
         pass
 
@@ -147,7 +149,8 @@ class HashStore:
     def close(self):
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def closed(self):
         pass
 
