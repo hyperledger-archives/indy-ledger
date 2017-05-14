@@ -215,6 +215,10 @@ class Ledger(ImmutableStore):
     def hashToStr(h):
         return base64.b64encode(h).decode()
 
+    @staticmethod
+    def strToHash(s):
+        return base64.b64decode(s).encode()
+
     def appendNewLineIfReq(self):
         import os
         import getpass
