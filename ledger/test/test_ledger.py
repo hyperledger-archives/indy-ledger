@@ -33,7 +33,6 @@ orderedFields = OrderedDict([
 ])
 
 ledgerSerializer = CompactSerializer(orderedFields)
-leafSerializer = JsonSerializer()
 
 
 @pytest.fixture(scope="function")

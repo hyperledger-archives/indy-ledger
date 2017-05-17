@@ -124,6 +124,20 @@ class ChunkedFileStore(FileStore):
         """
         return self._chunkCreator(ChunkedFileStore._chunkIndexToFileName(index))
 
+    def _get_key_location(self, key) -> (int, int):
+        """
+        Return chunk no and 1-based offset of key
+        :param key:
+        :return:
+        """
+        key = int(key)
+        remainder = key % self.chunkSize
+        addend = ChunkedFileStore.firstChunkIndex
+        chunk_no = key - remainder + addend if remainder \
+            else key - self.chunkSize + addend
+        offset = remainder or self.chunkSize
+        return chunk_no, offset
+
     def put(self, value, key=None) -> None:
         if self.itemNum > self.chunkSize:
             self._startNextChunk()
@@ -137,12 +151,10 @@ class ChunkedFileStore(FileStore):
 
         :return: value corresponding to specified key
         """
-        remainder = int(key) % self.chunkSize
-        addend = ChunkedFileStore.firstChunkIndex
-        fileNo = int(key) - remainder + addend if remainder \
-            else key - self.chunkSize + addend
-        keyToCompare = str(self.chunkSize if not remainder else remainder)
-        return self._openChunk(fileNo).get(keyToCompare)
+        # TODO: get is creating files when a key is given which is more than
+        # the store size
+        chunk_no, offset = self._get_key_location(key)
+        return self._openChunk(chunk_no).get(str(offset))
 
     def reset(self) -> None:
         """
@@ -209,6 +221,58 @@ class ChunkedFileStore(FileStore):
             return self._valueIterator(lines, prefix=prefix)
         else:
             return self._keyIterator(lines, prefix=prefix)
+
+    def get_range(self, start, end):
+        assert end >= start
+        start_chunk_no, start_offset = self._get_key_location(start)
+        end_chunk_no, end_offset = self._get_key_location(end)
+        if start_chunk_no == end_chunk_no:
+            assert end_offset >= start_offset
+            chunk = self._openChunk(start_chunk_no)
+            lines = [(self._parse_line(j, key=str(i))) for i, j in
+                     zip(range(start, end+1),
+                         chunk._getLines()[start_offset-1:end_offset])]
+        else:
+            lines = []
+            current_chunk_no = start_chunk_no
+            while current_chunk_no <= end_chunk_no:
+                chunk = self._openChunk(current_chunk_no)
+                if current_chunk_no == start_chunk_no:
+                    current_chunk_lines = chunk._getLines()[start_offset - 1:]
+                    lines.extend(
+                        [(self._parse_line(j, key=str(i))) for i, j in
+                         zip(range(start, start+len(current_chunk_lines)+1),
+                             current_chunk_lines)]
+                    )
+                elif current_chunk_no == end_chunk_no:
+                    current_chunk_lines = chunk._getLines()[:end_offset]
+                    lines.extend(
+                        [(self._parse_line(j, key=str(i))) for i, j in
+                         zip(range(end-len(current_chunk_lines)+1, end+1),
+                             current_chunk_lines)]
+                    )
+                else:
+                    current_chunk_lines = chunk._getLines()
+                    lines.extend(
+                        [(self._parse_line(j, key=str(i))) for i, j in
+                         zip(range(current_chunk_no,
+                                   current_chunk_no + self.chunkSize + 1),
+                             current_chunk_lines)]
+                    )
+                current_chunk_no += self.chunkSize
+        return lines
+
+    @property
+    def numKeys(self):
+        chunks = self._listChunks()
+        num_chunks = len(chunks)
+        if num_chunks == 0:
+            return 0
+        count = (num_chunks-1)*self.chunkSize
+        last_chunk = self._openChunk(chunks[-1])
+        count += len(last_chunk._getLines())
+        last_chunk.close()
+        return count
 
     @property
     def closed(self):

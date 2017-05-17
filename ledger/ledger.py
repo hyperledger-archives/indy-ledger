@@ -4,6 +4,7 @@ import time
 from collections import OrderedDict
 
 from ledger.compact_merkle_tree import CompactMerkleTree
+from ledger.stores.chunked_file_store import ChunkedFileStore
 from ledger.tree_hasher import TreeHasher
 from ledger.merkle_tree import MerkleTree
 from ledger.serializers.mapping_serializer import MappingSerializer
@@ -190,9 +191,12 @@ class Ledger(ImmutableStore):
             ensureDurability = ensureDurability or self.ensureDurability
             self._transactionLog = \
                 self._customTransactionLogStore or \
-                Ledger._defaultStore(self.dataDir,
+                Ledger._defaultStore(self.dataDir,      # This is wrong, use the code commented below
                                      self._transactionLogName,
                                      ensureDurability)
+                # self.__class__._defaultStore(self.dataDir,
+                #                      self._transactionLogName,
+                #                      ensureDurability)
 
     def stop(self):
         self._transactionLog.close()
@@ -202,13 +206,17 @@ class Ledger(ImmutableStore):
 
     def getAllTxn(self, frm: int=None, to: int=None):
         result = OrderedDict()
-        for seqNo, txn in self._transactionLog.iterator():
-            seqNo = int(seqNo)
-            if (frm is None or seqNo >= frm) and \
-                    (to is None or seqNo <= to):
+        if frm and to and isinstance(self._transactionLog, ChunkedFileStore):
+            for seqNo, txn in self._transactionLog.get_range(frm, to):
                 result[seqNo] = self.leafSerializer.deserialize(txn)
-            if to is not None and seqNo > to:
-                break
+        else:
+            for seqNo, txn in self._transactionLog.iterator():
+                seqNo = int(seqNo)
+                if (frm is None or seqNo >= frm) and \
+                        (to is None or seqNo <= to):
+                    result[seqNo] = self.leafSerializer.deserialize(txn)
+                if to is not None and seqNo > to:
+                    break
         return result
 
     @staticmethod

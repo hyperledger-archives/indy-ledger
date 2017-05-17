@@ -87,28 +87,34 @@ class FileStore:
     def _keyValueIterator(self, lines, prefix=None):
         return self._baseIterator(lines, prefix, True, True)
 
+    def _parse_line(self, line, prefix=None, returnKey: bool=True,
+                    returnValue: bool=True, key=None):
+        if self.isLineNoKey:
+            k = key
+            v = line
+        else:
+            k, v = line.split(self.delimiter, 1)
+        if returnValue:
+            if self.storeContentHash:
+                value, _ = v.rsplit(self.delimiter, 1)
+            else:
+                value = v
+        if not prefix or k.startswith(prefix):
+            if returnKey and returnValue:
+                return k, value
+            elif returnKey:
+                return k
+            elif returnValue:
+                return value
+
     # noinspection PyUnresolvedReferences
     def _baseIterator(self, lines, prefix, returnKey: bool, returnValue: bool):
         i = 1
         for line in lines:
+            k = str(i)
+            yield self._parse_line(line, prefix, returnKey, returnValue, k)
             if self.isLineNoKey:
-                k = str(i)
-                v = line
                 i += 1
-            else:
-                k, v = line.split(self.delimiter, 1)
-            if returnValue:
-                if self.storeContentHash:
-                    value, _ = v.rsplit(self.delimiter, 1)
-                else:
-                    value = v
-            if not prefix or k.startswith(prefix):
-                if returnKey and returnValue:
-                    yield (k, value)
-                elif returnKey:
-                    yield k
-                elif returnValue:
-                    yield value
 
     def _getLines(self):
         raise NotImplementedError()

@@ -1,7 +1,7 @@
 import os
 
 
-def cleanLines(source, lineSep = os.linesep):
+def cleanLines(source, lineSep=os.linesep):
     """
     :param source: some iterable source (list, file, etc)
     :param lineSep: string of separators (chars) that must be removed
