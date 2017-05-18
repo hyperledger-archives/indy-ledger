@@ -190,9 +190,12 @@ class Ledger(ImmutableStore):
             ensureDurability = ensureDurability or self.ensureDurability
             self._transactionLog = \
                 self._customTransactionLogStore or \
-                self._defaultStore(self.dataDir,
-                                   self._transactionLogName,
-                                   ensureDurability)
+                Ledger._defaultStore(self.dataDir,      # This is wrong, use the code commented below
+                                     self._transactionLogName,
+                                     ensureDurability)
+                # self.__class__._defaultStore(self.dataDir,
+                #                      self._transactionLogName,
+                #                      ensureDurability)
             self._transactionLog.appendNewLineIfReq()
 
     def stop(self):
