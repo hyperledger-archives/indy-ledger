@@ -18,12 +18,17 @@ from ledger.util import F
 class Ledger(ImmutableStore):
 
     @staticmethod
-    def _defaultStore(dataDir, logName, ensureDurability) -> FileStore:
+    def _defaultStore(dataDir,
+                      logName,
+                      ensureDurability,
+                      defaultFile) -> FileStore:
+
         return TextFileStore(dataDir,
-                                logName,
-                                isLineNoKey=True,
-                                storeContentHash=False,
-                                ensureDurability=ensureDurability)
+                             logName,
+                             isLineNoKey=True,
+                             storeContentHash=False,
+                             ensureDurability=ensureDurability,
+                             defaultFile=defaultFile)
 
     def __init__(self,
                  tree: MerkleTree,
@@ -31,7 +36,8 @@ class Ledger(ImmutableStore):
                  serializer: MappingSerializer=None,
                  fileName: str=None,
                  ensureDurability: bool=True,
-                 transactionLogStore: FileStore = None):
+                 transactionLogStore: FileStore=None,
+                 defaultFile=None):
         """
         :param tree: an implementation of MerkleTree
         :param dataDir: the directory where the transaction log is stored
@@ -39,6 +45,9 @@ class Ledger(ImmutableStore):
         it and storing it in the MerkleTree
         :param fileName: the name of the transaction log file
         """
+        assert not transactionLogStore or not defaultFile
+        self.defaultFile = defaultFile
+
         self.dataDir = dataDir
         self.tree = tree
         self.leafSerializer = serializer or \
@@ -192,7 +201,8 @@ class Ledger(ImmutableStore):
                 self._customTransactionLogStore or \
                 self._defaultStore(self.dataDir,
                                    self._transactionLogName,
-                                   ensureDurability)
+                                   ensureDurability,
+                                   self.defaultFile)
             self._transactionLog.appendNewLineIfReq()
 
     def stop(self):
