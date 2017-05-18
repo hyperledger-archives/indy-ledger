@@ -262,6 +262,10 @@ class ChunkedFileStore(FileStore):
                 current_chunk_no += self.chunkSize
         return lines
 
+    def appendNewLineIfReq(self):
+        self._useLatestChunk()
+        self.currentChunk.appendNewLineIfReq()
+
     @property
     def numKeys(self):
         chunks = self._listChunks()

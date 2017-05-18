@@ -1,3 +1,4 @@
+import logging
 import os
 from hashlib import sha256
 
@@ -145,6 +146,21 @@ class FileStore:
         for k, v in self.iterator():
             pass
         return k
+
+    def appendNewLineIfReq(self):
+        try:
+            logging.debug("new line check for file: {}".format(self.dbPath))
+            with open(self.dbPath, 'a+b') as f:
+                size = f.tell()
+                if size > 0:
+                    f.seek(-len(self.lineSep), 2)  # last character in file
+                    if f.read() != self.lineSep:
+                        linesep = self.lineSep if isinstance(self.lineSep, bytes) else self.lineSep.encode()
+                        f.write(linesep)
+                        logging.debug(
+                            "new line added for file: {}".format(self.dbPath))
+        except FileNotFoundError:
+            pass
 
     @property
     def numKeys(self):

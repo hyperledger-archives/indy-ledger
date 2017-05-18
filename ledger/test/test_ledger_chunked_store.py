@@ -5,7 +5,7 @@ from binascii import hexlify
 import pytest
 
 from ledger.compact_merkle_tree import CompactMerkleTree
-from ledger.ledger import Ledger as _Ledger
+from ledger.ledger import Ledger
 from ledger.serializers.json_serializer import JsonSerializer
 from ledger.stores.chunked_file_store import ChunkedFileStore
 from ledger.stores.file_hash_store import FileHashStore
@@ -22,11 +22,6 @@ def ledger(tempdir):
                              chunkSize=chunk_size,
                              storeContentHash=False,
                              ensureDurability=False)
-    # TODO: Temporary fix
-    class Ledger(_Ledger):
-        def appendNewLineIfReq(self):
-            pass
-
     ledger = Ledger(CompactMerkleTree(hashStore=FileHashStore(dataDir=tempdir)),
                     dataDir=tempdir, serializer=JsonSerializer(),
                     transactionLogStore=store)

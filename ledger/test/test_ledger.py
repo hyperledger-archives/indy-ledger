@@ -172,7 +172,8 @@ def testStartLedgerWithoutNewLineAppendedToLastRecord(ledger):
            '"node_port":9701,"services":["VALIDATOR"]},"dest":"Gw6pDLhcBcoQesN72qfotTgFa7cbuqZpkX3Xo6pLhPhv",' \
            '"identifier":"FYmoFw55GeQH7SRFa37dkx1d2dZ3zUF8ckg7wmL7ofN4",' \
            '"txnId":"fea82e10e894419fe2bea7d96296a6d46f50f93f9eeda954ec461b2ed2950b62","type":"0"}'
-    lineSep = os.linesep.encode()
+    lineSep = ledger._transactionLog.lineSep
+    lineSep = lineSep if isinstance(lineSep, bytes) else lineSep.encode()
     ledger.start()
     ledger._transactionLog.put(txnStr)
     ledger._transactionLog.put(txnStr)
@@ -190,3 +191,5 @@ def testStartLedgerWithoutNewLineAppendedToLastRecord(ledger):
     assert size2 == size1
     newLineCountsAferLedgerStart = open(ledger._transactionLog.dbPath, 'rb').read().count(lineSep) + 1
     assert newLineCountsAferLedgerStart == 4
+    ledger._transactionLog.put(txnStr)
+    assert ledger._transactionLog.numKeys == 4
