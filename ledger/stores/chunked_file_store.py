@@ -39,19 +39,21 @@ class ChunkedFileStore(FileStore):
                  storeContentHash: bool=True,
                  chunkSize: int=1000,
                  ensureDurability: bool=True,
-                 chunkStoreConstructor = TextFileStore):
+                 chunkStoreConstructor=TextFileStore,
+                 defaultFile=None):
         """
         :param chunkStoreConstructor: constructor of store for single chunk
         """
 
         assert chunkStoreConstructor is not None
 
-        FileStore.__init__(self,
-                           dbDir,
-                           dbName,
-                           isLineNoKey,
-                           storeContentHash,
-                           ensureDurability)
+        self.__init__(self,
+                      dbDir,
+                      dbName,
+                      isLineNoKey,
+                      storeContentHash,
+                      ensureDurability,
+                      defaultFile=defaultFile)
 
         self.chunkSize = chunkSize
         self.itemNum = 1  # chunk size counter
@@ -67,6 +69,18 @@ class ChunkedFileStore(FileStore):
                                   ensureDurability)
 
         self._initDB(self.dataDir, dbName)
+
+    def _prepareFiles(self, dbDir, dbName, defaultFile):
+        super()._prepareFiles(dbDir, dbName, defaultFile)
+        path = os.path.join(dbDir, dbName)
+        if os.path.isdir(path):
+            return
+        import shutil
+        tmp = path + ".tmp"
+        shutil.move(path, tmp)
+        os.mkdir(path)
+        firstChunk = os.path.join(path, "0")
+        shutil.move(tmp, firstChunk)
 
     def _initDB(self, dataDir, dbName) -> None:
         self._prepareDBLocation(dataDir, dbName)
