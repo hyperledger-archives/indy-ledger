@@ -47,13 +47,12 @@ class ChunkedFileStore(FileStore):
 
         assert chunkStoreConstructor is not None
 
-        self.__init__(self,
-                      dbDir,
-                      dbName,
-                      isLineNoKey,
-                      storeContentHash,
-                      ensureDurability,
-                      defaultFile=defaultFile)
+        super().__init__(dbDir,
+                         dbName,
+                         isLineNoKey,
+                         storeContentHash,
+                         ensureDurability,
+                         defaultFile=defaultFile)
 
         self.chunkSize = chunkSize
         self.itemNum = 1  # chunk size counter
@@ -231,10 +230,9 @@ class ChunkedFileStore(FileStore):
         lines = self._getLines()
         if includeKey and includeValue:
             return self._keyValueIterator(lines, prefix=prefix)
-        elif includeValue:
+        if includeValue:
             return self._valueIterator(lines, prefix=prefix)
-        else:
-            return self._keyIterator(lines, prefix=prefix)
+        return self._keyIterator(lines, prefix=prefix)
 
     def get_range(self, start, end):
         assert end >= start
