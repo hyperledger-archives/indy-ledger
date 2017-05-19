@@ -1,4 +1,5 @@
 import os
+import shutil
 from typing import List
 from ledger.stores.file_store import FileStore
 from ledger.stores.text_file_store import TextFileStore
@@ -67,22 +68,21 @@ class ChunkedFileStore(FileStore):
                                   storeContentHash,
                                   ensureDurability)
 
-        self._initDB(self.dataDir, dbName)
+        self._initDB(dbDir, dbName)
 
     def _prepareFiles(self, dbDir, dbName, defaultFile):
-        super()._prepareFiles(dbDir, dbName, defaultFile)
         path = os.path.join(dbDir, dbName)
-        if os.path.isdir(path):
-            return
-        import shutil
-        tmp = path + ".tmp"
-        shutil.move(path, tmp)
         os.mkdir(path)
-        firstChunk = os.path.join(path, "0")
-        shutil.move(tmp, firstChunk)
+        if defaultFile:
+            firstChunk = os.path.join(path, "0")
+            shutil.copy(defaultFile, firstChunk)
 
     def _initDB(self, dataDir, dbName) -> None:
-        self._prepareDBLocation(dataDir, dbName)
+        super()._initDB(dataDir, dbName)
+        path = os.path.join(dataDir, dbName)
+        if not os.path.isdir(path):
+            raise ValueError("Transactions file {} is not directory"
+                             .format(path))
         self._useLatestChunk()
 
     def _useLatestChunk(self) -> None:
@@ -100,11 +100,6 @@ class ChunkedFileStore(FileStore):
         if len(chunks) > 0:
             return chunks[-1]
         return ChunkedFileStore.firstChunkIndex
-
-    def _prepareDBLocation(self, dbDir, dbName) -> None:
-        self.dbName = dbName
-        if not os.path.exists(self.dataDir):
-            os.makedirs(self.dataDir)
 
     def _startNextChunk(self) -> None:
         """
