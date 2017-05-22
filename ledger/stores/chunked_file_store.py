@@ -118,7 +118,11 @@ class ChunkedFileStore(FileStore):
         """
 
         if self.currentChunk is not None:
+            if self.currentChunkIndex == index and \
+                    not self.currentChunk.closed:
+                return
             self.currentChunk.close()
+
         self.currentChunk = self._openChunk(index)
         self.currentChunkIndex = index
         self.itemNum = self.currentChunk.numKeys + 1
@@ -130,6 +134,9 @@ class ChunkedFileStore(FileStore):
         :param index: chunk index
         :return: opened chunk
         """
+
+        # if self.currentChunkIndex == index:
+        #     return self.currentChunk
         return self._chunkCreator(ChunkedFileStore._chunkIndexToFileName(index))
 
     def _get_key_location(self, key) -> (int, int):
@@ -162,7 +169,8 @@ class ChunkedFileStore(FileStore):
         # TODO: get is creating files when a key is given which is more than
         # the store size
         chunk_no, offset = self._get_key_location(key)
-        return self._openChunk(chunk_no).get(str(offset))
+        with self._openChunk(chunk_no) as chunk:
+            return chunk.get(str(offset))
 
     def reset(self) -> None:
         """
@@ -183,10 +191,9 @@ class ChunkedFileStore(FileStore):
         allLines = []
         chunkIndices = self._listChunks()
         for chunkIndex in chunkIndices:
-            chunk = self._openChunk(chunkIndex)
-            # implies that getLines is logically protected, not private
-            allLines.extend(chunk._getLines())
-            chunk.close()
+            with self._openChunk(chunkIndex) as chunk:
+                # implies that getLines is logically protected, not private
+                allLines.extend(chunk._getLines())
         return allLines
 
     def open(self) -> None:
@@ -241,37 +248,37 @@ class ChunkedFileStore(FileStore):
         end_chunk_no, end_offset = self._get_key_location(end)
         if start_chunk_no == end_chunk_no:
             assert end_offset >= start_offset
-            chunk = self._openChunk(start_chunk_no)
-            lines = [(self._parse_line(j, key=str(i))) for i, j in
-                     zip(range(start, end+1),
-                         chunk._getLines()[start_offset-1:end_offset])]
+            with self._openChunk(start_chunk_no) as chunk:
+                lines = [(self._parse_line(j, key=str(i))) for i, j in
+                         zip(range(start, end+1),
+                             chunk._getLines()[start_offset-1:end_offset])]
         else:
             lines = []
             current_chunk_no = start_chunk_no
             while current_chunk_no <= end_chunk_no:
-                chunk = self._openChunk(current_chunk_no)
-                if current_chunk_no == start_chunk_no:
-                    current_chunk_lines = chunk._getLines()[start_offset - 1:]
-                    lines.extend(
-                        [(self._parse_line(j, key=str(i))) for i, j in
-                         zip(range(start, start+len(current_chunk_lines)+1),
-                             current_chunk_lines)]
-                    )
-                elif current_chunk_no == end_chunk_no:
-                    current_chunk_lines = chunk._getLines()[:end_offset]
-                    lines.extend(
-                        [(self._parse_line(j, key=str(i))) for i, j in
-                         zip(range(end-len(current_chunk_lines)+1, end+1),
-                             current_chunk_lines)]
-                    )
-                else:
-                    current_chunk_lines = chunk._getLines()
-                    lines.extend(
-                        [(self._parse_line(j, key=str(i))) for i, j in
-                         zip(range(current_chunk_no,
-                                   current_chunk_no + self.chunkSize + 1),
-                             current_chunk_lines)]
-                    )
+                with self._openChunk(current_chunk_no) as chunk:
+                    if current_chunk_no == start_chunk_no:
+                        current_chunk_lines = chunk._getLines()[start_offset - 1:]
+                        lines.extend(
+                            [(self._parse_line(j, key=str(i))) for i, j in
+                             zip(range(start, start+len(current_chunk_lines)+1),
+                                 current_chunk_lines)]
+                        )
+                    elif current_chunk_no == end_chunk_no:
+                        current_chunk_lines = chunk._getLines()[:end_offset]
+                        lines.extend(
+                            [(self._parse_line(j, key=str(i))) for i, j in
+                             zip(range(end-len(current_chunk_lines)+1, end+1),
+                                 current_chunk_lines)]
+                        )
+                    else:
+                        current_chunk_lines = chunk._getLines()
+                        lines.extend(
+                            [(self._parse_line(j, key=str(i))) for i, j in
+                             zip(range(current_chunk_no,
+                                       current_chunk_no + self.chunkSize + 1),
+                                 current_chunk_lines)]
+                        )
                 current_chunk_no += self.chunkSize
         return lines
 
