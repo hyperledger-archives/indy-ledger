@@ -74,7 +74,7 @@ class ChunkedFileStore(FileStore):
         path = os.path.join(dbDir, dbName)
         os.mkdir(path)
         if defaultFile:
-            firstChunk = os.path.join(path, "0")
+            firstChunk = os.path.join(path, str(self.firstChunkIndex))
             shutil.copy(defaultFile, firstChunk)
 
     def _initDB(self, dataDir, dbName) -> None:
@@ -230,8 +230,14 @@ class ChunkedFileStore(FileStore):
         return self._keyIterator(lines, prefix=prefix)
 
     def get_range(self, start, end):
-        assert end >= start
+        assert start <= end
+
+        if start == end:
+            res = self.get(start)
+            return [(start, res)] if res is not None else []
+
         start_chunk_no, start_offset = self._get_key_location(start)
+
         end_chunk_no, end_offset = self._get_key_location(end)
         if start_chunk_no == end_chunk_no:
             assert end_offset >= start_offset
