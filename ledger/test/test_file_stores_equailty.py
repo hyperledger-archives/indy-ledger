@@ -12,9 +12,19 @@ def test_equality_to_text_file_store(tmpdir):
     chunkSize=3
 
     isLineNoKey = True
-    storeContentHash = True
+    storeContentHash = False
     ensureDurability = True
     dbDir = str(tmpdir)
+
+
+    defaultFile = os.path.join(dbDir, "template")
+    with open(defaultFile, "w") as f:
+        f.writelines([
+            "FirstLine\n",
+            "OneMoreLine\n",
+            "AnotherLine\n",
+            "LastDefaultLine\n"
+        ])
 
     chunkedStore = ChunkedFileStore(dbDir=dbDir,
                                     dbName="chunked_data",
@@ -22,13 +32,15 @@ def test_equality_to_text_file_store(tmpdir):
                                     storeContentHash=storeContentHash,
                                     chunkSize=chunkSize,
                                     ensureDurability=ensureDurability,
-                                    chunkStoreConstructor=TextFileStore)
+                                    chunkStoreConstructor=TextFileStore,
+                                    defaultFile=defaultFile)
 
     textStore = TextFileStore(dbDir=dbDir,
                               dbName="text_data",
                               isLineNoKey=isLineNoKey,
                               storeContentHash=storeContentHash,
-                              ensureDurability=ensureDurability)
+                              ensureDurability=ensureDurability,
+                              defaultFile=defaultFile)
 
     for i in range(1, 5 * chunkSize):
         value = str(i)
