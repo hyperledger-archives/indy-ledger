@@ -8,9 +8,6 @@ def test_equality_to_text_file_store(tmpdir):
     """
     This test verifies that TextFileStore and ChunkedFileStore behave equally
     """
-
-    chunkSize=3
-
     isLineNoKey = True
     storeContentHash = False
     ensureDurability = True
@@ -18,13 +15,18 @@ def test_equality_to_text_file_store(tmpdir):
 
 
     defaultFile = os.path.join(dbDir, "template")
+
+    lines = [
+        "FirstLine\n",
+        "OneMoreLine\n",
+        "AnotherLine\n",
+        "LastDefaultLine\n"
+    ]
+
     with open(defaultFile, "w") as f:
-        f.writelines([
-            "FirstLine\n",
-            "OneMoreLine\n",
-            "AnotherLine\n",
-            "LastDefaultLine\n"
-        ])
+        f.writelines(lines)
+
+    chunkSize = len(lines)
 
     chunkedStore = ChunkedFileStore(dbDir=dbDir,
                                     dbName="chunked_data",
