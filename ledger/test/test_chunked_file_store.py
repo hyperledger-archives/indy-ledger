@@ -104,3 +104,38 @@ def test_get_range(populatedChunkedFileStore):
         assert data[int(k) - 1] == v
         num += 1
     assert num == 4*chunkSize
+
+
+def test_chunk_size_limitation_when_default_file_used(tmpdir):
+    """
+    This test checks that chunk size can not be lower then a number of items 
+    in default file, used for initialization of ChunkedFileStore
+    """
+
+    isLineNoKey = True
+    storeContentHash = False
+    ensureDurability = True
+    dbDir = str(tmpdir)
+    defaultFile = os.path.join(dbDir, "template")
+
+    lines = [
+        "FirstLine\n",
+        "OneMoreLine\n",
+        "AnotherLine\n",
+        "LastDefaultLine\n"
+    ]
+    with open(defaultFile, "w") as f:
+        f.writelines(lines)
+
+    chunkSize = len(lines) - 1
+
+    with pytest.raises(ValueError) as err:
+        ChunkedFileStore(dbDir=dbDir,
+                         dbName="chunked_data",
+                         isLineNoKey=isLineNoKey,
+                         storeContentHash=storeContentHash,
+                         chunkSize=chunkSize,
+                         ensureDurability=ensureDurability,
+                         chunkStoreConstructor=TextFileStore,
+                         defaultFile=defaultFile)
+    assert "Default file is larger than chunk size" in str(err)
