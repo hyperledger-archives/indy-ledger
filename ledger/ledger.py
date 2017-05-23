@@ -213,19 +213,18 @@ class Ledger(ImmutableStore):
 
     def getAllTxn(self, frm: int=None, to: int=None):
         result = OrderedDict()
-        # TODO: This does not work, check why
-        # TODO: PLEASE USE POLYMORPHISM!!!
-        # if frm and to and isinstance(self._transactionLog, ChunkedFileStore):
-        #     for seqNo, txn in self._transactionLog.get_range(frm, to):
-        #         result[seqNo] = self.leafSerializer.deserialize(txn)
-        # else:
-        for seqNo, txn in self._transactionLog.iterator():
-            seqNo = int(seqNo)
-            if (frm is None or seqNo >= frm) and \
-                    (to is None or seqNo <= to):
+        # TODO: Refactor this to use polymorphism instead
+        if frm and to and isinstance(self._transactionLog, ChunkedFileStore):
+            for seqNo, txn in self._transactionLog.get_range(frm, to):
                 result[seqNo] = self.leafSerializer.deserialize(txn)
-            if to is not None and seqNo > to:
-                break
+        else:
+            for seqNo, txn in self._transactionLog.iterator():
+                seqNo = int(seqNo)
+                if (frm is None or seqNo >= frm) and \
+                        (to is None or seqNo <= to):
+                    result[seqNo] = self.leafSerializer.deserialize(txn)
+                if to is not None and seqNo > to:
+                    break
         return result
 
     @staticmethod
