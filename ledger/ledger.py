@@ -44,6 +44,7 @@ class Ledger(ImmutableStore):
         :param serializer: an object that can serialize the data before hashing
         it and storing it in the MerkleTree
         :param fileName: the name of the transaction log file
+        :param defaultFile: file or dir to use for initialization of transaction log store
         """
         assert not transactionLogStore or not defaultFile
         self.defaultFile = defaultFile
