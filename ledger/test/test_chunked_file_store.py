@@ -139,5 +139,3 @@ def test_chunk_size_limitation_when_default_file_used(tmpdir):
                          chunkStoreConstructor=TextFileStore,
                          defaultFile=defaultFile)
     assert "Default file is larger than chunk size" in str(err)
-
-

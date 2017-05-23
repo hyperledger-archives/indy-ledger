@@ -43,6 +43,8 @@ class ChunkedFileStore(FileStore):
                  chunkStoreConstructor=TextFileStore,
                  defaultFile=None):
         """
+        
+        :param chunkSize: number of items in one chunk. Cannot be lower then number of items in defaultFile 
         :param chunkStoreConstructor: constructor of store for single chunk
         """
 
@@ -71,9 +73,16 @@ class ChunkedFileStore(FileStore):
         self._initDB(dbDir, dbName)
 
     def _prepareFiles(self, dbDir, dbName, defaultFile):
+
+        def getFileSize(file):
+            with self._chunkCreator(file) as chunk:
+                return chunk.numKeys
+
         path = os.path.join(dbDir, dbName)
         os.mkdir(path)
         if defaultFile:
+            if self.chunkSize < getFileSize(defaultFile):
+                raise ValueError("Default file is larger than chunk size")
             firstChunk = os.path.join(path, str(self.firstChunkIndex))
             shutil.copy(defaultFile, firstChunk)
 
@@ -135,8 +144,6 @@ class ChunkedFileStore(FileStore):
         :return: opened chunk
         """
 
-        # if self.currentChunkIndex == index:
-        #     return self.currentChunk
         return self._chunkCreator(ChunkedFileStore._chunkIndexToFileName(index))
 
     def _get_key_location(self, key) -> (int, int):
