@@ -81,11 +81,11 @@ class Ledger(ImmutableStore):
         # if not self.tree.hashStore \
         #         or isinstance(self.tree.hashStore, MemoryHashStore) \
         #         or self.tree.leafCount == 0:
-        #     logging.debug("Recovering tree from transaction log")
+        #     logging.info("Recovering tree from transaction log")
         #     self.recoverTreeFromTxnLog()
         # else:
         #     try:
-        #         logging.debug("Recovering tree from hash store of size {}".
+        #         logging.info("Recovering tree from hash store of size {}".
         #                       format(self.tree.leafCount))
         #         self.recoverTreeFromHashStore()
         #     except ConsistencyVerificationFailed:
@@ -130,14 +130,16 @@ class Ledger(ImmutableStore):
         return self._addToTreeSerialized(serializedLeafData)
 
     def _addToTreeSerialized(self, serializedLeafData):
-        auditPath = self.tree.append(serializedLeafData)
+        audit_path = self.tree.append(serializedLeafData)
         self.seqNo += 1
-        merkleInfo = {
+        return self._build_merkle_proof(audit_path)
+
+    def _build_merkle_proof(self, audit_path):
+        return {
             F.seqNo.name: self.seqNo,
             F.rootHash.name: self.hashToStr(self.tree.root_hash),
-            F.auditPath.name: [self.hashToStr(h) for h in auditPath]
+            F.auditPath.name: [self.hashToStr(h) for h in audit_path]
         }
-        return merkleInfo
 
     def _addToStore(self, data):
         key = str(self.seqNo + 1)
